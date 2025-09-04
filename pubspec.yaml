@@ -1,0 +1,32 @@
+name: my_app
+description: A new Flutter project.
+publish_to: 'none' 
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.20.0
+  google_sign_in: ^6.2.1
+  shared_preferences: ^2.2.3
+  cloud_firestore: ^4.17.4
+  url_launcher: ^6.3.1
+  google_nav_bar: ^5.0.6 
+  shimmer: ^3.0.0
+  
+  # --- الحزمة الجديدة والصحيحة لاختيار الدولة ---
+  country_picker: ^2.0.27
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
