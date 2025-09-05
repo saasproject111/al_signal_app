@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart'; // 1. استيراد الحزمة المطلوبة
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,7 +14,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  // ... كل متغيرات ودوال الحالة تبقى كما هي ...
   int _activeUsers = 7500;
   int _winTrades = 0;
   int _lossTrades = 0;
@@ -38,23 +37,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _setupTimers();
     _loadVipMessages();
   }
-  
-  // ... كل دوال initState و dispose تبقى كما هي ...
+
   void _setupAnimations() {
     _pulseAnimationController = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
     _pulseAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(CurvedAnimation(parent: _pulseAnimationController, curve: Curves.easeInOut));
     _bannerGlowController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
     _bannerGlowAnimation = ColorTween(begin: Colors.white.withOpacity(0.2), end: Colors.yellow[700]).animate(CurvedAnimation(parent: _bannerGlowController, curve: Curves.easeIn));
   }
+  
   void _setDailyGoals() {
     final random = Random();
     _dailyTradeTarget = 230 + random.nextInt(41);
     _dailyProfitRatio = 0.90 + random.nextDouble() * 0.05;
   }
+
   void _setupTimers() {
     _numbersTimer = Timer.periodic(const Duration(seconds: 3), (timer) { _updateNumbers(); });
     _scheduleNextBannerUpdate();
   }
+
   Future<void> _loadVipMessages() async {
     try {
       final String messagesString = await rootBundle.loadString('assets/messages.txt');
@@ -66,6 +67,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() { _currentVipMessage = 'مرحبًا بك في عضوية VIP!'; });
     }
   }
+
   void _scheduleNextBannerUpdate() {
     if (!mounted) return;
     final randomDuration = Duration(minutes: 4 + Random().nextInt(5));
@@ -77,6 +79,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _scheduleNextBannerUpdate();
     });
   }
+
   void _updateNumbers() {
     final now = DateTime.now();
     if (now.day != _currentDay) {
@@ -87,6 +90,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final randomChange = Random().nextInt(21) - 10;
     final progressOfDay = (now.hour * 3600 + now.minute * 60 + now.second) / (24 * 3600);
     final currentTotalTrades = (_dailyTradeTarget * progressOfDay);
+    
     setState(() {
       _activeUsers = (baseUsers + randomChange).round();
       _winTrades = (currentTotalTrades * _dailyProfitRatio).round();
@@ -102,14 +106,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // 2. دالة جديدة لفتح رابط تليجرام
-  Future<void> _launchTelegram() async {
-    // !! استبدل YourTelegramUsername بمعرف حسابك !!
-    final Uri url = Uri.parse('https://t.me/m/FIrEmovvOTU0');
+  // Fonction pour lancer des URLs
+  Future<void> _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      // رسالة خطأ في حال لم يتمكن من فتح الرابط
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('لا يمكن فتح الرابط')),
+        const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
       );
     }
   }
@@ -128,12 +130,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
-        ),
-        // --- 3. إضافة الزر العائم هنا ---
-        floatingActionButton: FloatingActionButton(
-          onPressed: _launchTelegram,
-          backgroundColor: Colors.cyan,
-          child: const Icon(Icons.telegram, color: Colors.white),
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -155,6 +151,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 _buildCurrencyCard(iconPath: 'assets/eth_logo.png', currency: 'ETH', price: '4,473.44 USD', chartColor: Colors.lightBlueAccent),
                 const SizedBox(height: 16),
                 _buildCurrencyCard(iconPath: 'assets/usdt_logo.png', currency: 'USDT', price: '1.0002 USD', chartColor: Colors.greenAccent),
+                const SizedBox(height: 40), // Espace avant les boutons
+
+                // --- Section des boutons de réseaux sociaux ajoutée ici ---
+                _buildSocialButtons(),
+                // ---------------------------------------------------
               ],
             ),
           ),
@@ -162,8 +163,96 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
+
+  // Widget pour construire les boutons de réseaux sociaux
+  Widget _buildSocialButtons() {
+    return Column(
+      children: [
+        _buildSocialButton(
+          label: 'YOUTUBE CHANNEL',
+          icon: Icons.play_circle_fill, // Icône approximative de YouTube
+          iconColor: Colors.red,
+          gradient: const LinearGradient(colors: [Colors.red, Colors.orangeAccent]),
+          onPressed: () {
+            _launchURL('https://youtube.com/YourChannel'); // Remplacez par votre lien
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildSocialButton(
+          label: 'TELEGRAM GROUP',
+          icon: Icons.telegram,
+          iconColor: Colors.blue,
+          gradient: const LinearGradient(colors: [Colors.blue, Colors.cyanAccent]),
+          onPressed: () {
+            _launchURL('https://t.me/YourGroup'); // Remplacez par votre lien
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildSocialButton(
+          label: 'INSTAGRAM PAGE',
+          icon: Icons.camera_alt, // Icône approximative d'Instagram
+          iconColor: Colors.purple,
+          gradient: const LinearGradient(colors: [Colors.purple, Colors.pinkAccent]),
+          onPressed: () {
+            _launchURL('https://instagram.com/YourPage'); // Remplacez par votre lien
+          },
+        ),
+      ],
+    );
+  }
+
+  // Widget pour construire un bouton social individuel
+  Widget _buildSocialButton({
+    required String label,
+    required IconData icon,
+    required Color iconColor,
+    required Gradient gradient,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        padding: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        elevation: 5,
+        shadowColor: Colors.black.withOpacity(0.5),
+      ),
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  shadows: [Shadow(blurRadius: 2.0, color: Colors.black38, offset: Offset(1, 1))],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
   
-  // ... كل الويدجتس المساعدة الأخرى تبقى كما هي تمامًا ...
+  // Les autres widgets d'assistance restent les mêmes
   Widget _buildLatestVipBanner() {
     return AnimatedBuilder(
       animation: _bannerGlowController,
