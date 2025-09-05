@@ -4,9 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:my_app/screens/subscription_page.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:intl/intl.dart';
 
-// 1. تحديث كلاس Recommendation بالكامل
+// كلاس Recommendation يبقى كما هو
 class Recommendation {
   final String pair;
   final String direction;
@@ -60,7 +59,6 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ... build method يبقى كما هو
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -86,9 +84,8 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
   }
 
   Widget _buildRecommendationsList(bool isUserVip) {
-    // ... StreamBuilder يبقى كما هو
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('recommendations').orderBy('timestamp', descending: true).snapshots(),
+      stream: FirebaseFirestore.instance.collection('recommendations').orderBy('timestamp', descending: true).limit(10).snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const Center(child: Text('لا توجد توصيات حاليًا', style: TextStyle(color: Colors.white)));
@@ -98,139 +95,125 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
 
         if (!isUserVip && filteredRecommendations.isEmpty) return _buildVipLockScreen();
 
+        // --- تم التعديل هنا ---
+        // لم نعد نستخدم Column، بل نعرض البطاقة مباشرة
         return ListView.builder(
-          padding: const EdgeInsets.only(top: 120, bottom: 20),
+          padding: const EdgeInsets.only(top: 120, bottom: 20, left: 16, right: 16),
           itemCount: filteredRecommendations.length,
           itemBuilder: (context, index) {
             final rec = filteredRecommendations[index];
-            return Column(children: [
-              _buildRecommendationCard(rec), 
-              _buildResultBanner(rec.result)
-            ]);
+            return _buildRecommendationCard(rec);
           },
         );
       },
     );
   }
 
-  // 2. إعادة تصميم بطاقة التوصية بالكامل
+  // ويدجت بناء بطاقة التوصية المحدثة
   Widget _buildRecommendationCard(Recommendation rec) {
     final bool isCall = rec.direction == 'call';
-    return _buildGlassCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(rec.pair.replaceAll('-', ' - '), style: TextStyle(color: Colors.yellow[600], fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildDetailColumn('الاتجاه', isCall ? Icons.arrow_upward : Icons.arrow_downward, isCall ? Colors.greenAccent : Colors.redAccent),
-                _buildDetailColumn('وقت الدخول', rec.entryTime, Colors.cyanAccent),
-                _buildDetailColumn('المده', rec.timeframe, Colors.cyanAccent),
-              ],
-            ),
-            // --- إضافة البيانات الجديدة هنا ---
-            if (rec.forecast != null || rec.payout != null) ...[
-              const Divider(color: Colors.white24, height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+    
+    // تحديد لون الحدود بناءً على النتيجة
+    Color borderColor;
+    if (rec.result == 'win') {
+      borderColor = Colors.greenAccent;
+    } else if (rec.result == 'loss') {
+      borderColor = Colors.redAccent;
+    } else {
+      borderColor = Colors.white.withOpacity(0.2);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(25.0),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: Container(
+            decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: BorderRadius.circular(25.0),
+                // استخدام لون الحدود المتغير
+                border: Border.all(color: borderColor, width: 1.5)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
                 children: [
-                  if (rec.forecast != null) _buildExtraDetailRow(Icons.analytics_outlined, "Forecast: ${rec.forecast}%"),
-                  if (rec.payout != null) _buildExtraDetailRow(Icons.monetization_on_outlined, "Payout: ${rec.payout}%"),
+                  Text(rec.pair.replaceAll('-', ' - '), style: TextStyle(color: Colors.yellow[600], fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildDetailColumn('الاتجاه', isCall ? Icons.arrow_upward : Icons.arrow_downward, isCall ? Colors.greenAccent : Colors.redAccent),
+                      _buildDetailColumn('وقت الدخول', rec.entryTime, Colors.cyanAccent),
+                      _buildDetailColumn('المده', rec.timeframe, Colors.cyanAccent),
+                    ],
+                  ),
+                  if (rec.forecast != null || rec.payout != null) ...[
+                    const Divider(color: Colors.white24, height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        if (rec.forecast != null) _buildExtraDetailRow(Icons.analytics_outlined, "Forecast: ${rec.forecast}%"),
+                        if (rec.payout != null) _buildExtraDetailRow(Icons.monetization_on_outlined, "Payout: ${rec.payout}%"),
+                      ],
+                    ),
+                  ],
+                  // --- إضافة قسم النتيجة المدمج هنا ---
+                  const Divider(color: Colors.white24, height: 24),
+                  _buildResultRow(rec.result),
                 ],
               ),
-            ]
-          ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  // ... باقي الويدجتس تبقى كما هي تقريبًا
-  Widget _buildResultBanner(String? result) {
-    // ... الكود كما هو
+  // ويدجت جديدة لعرض النتيجة داخل البطاقة
+  Widget _buildResultRow(String? result) {
     if (result == null) {
-      return Container(
-          width: 200,
-          margin: const EdgeInsets.symmetric(vertical: 12.0),
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          decoration: BoxDecoration(color: Colors.grey[800], borderRadius: BorderRadius.circular(30.0)),
-          child: Shimmer.fromColors(
-              baseColor: Colors.grey[600]!,
-              highlightColor: Colors.grey[500]!,
-              child: const Center(child: Text('في انتظار النتيجة...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))));
+      return Shimmer.fromColors(
+          baseColor: Colors.grey[600]!,
+          highlightColor: Colors.grey[500]!,
+          child: const Text('في انتظار النتيجة...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)));
     } else if (result == 'win') {
-      return Container(
-          width: 150,
-          margin: const EdgeInsets.symmetric(vertical: 12.0),
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(30.0), boxShadow: [BoxShadow(color: Colors.green.withOpacity(0.5), blurRadius: 10)]),
-          child: const Center(
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 8),
-            Text('ربح', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-          ])));
-    } else {
-      return Container(
-          width: 150,
-          margin: const EdgeInsets.symmetric(vertical: 12.0),
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(30.0), boxShadow: [BoxShadow(color: Colors.red.withOpacity(0.5), blurRadius: 10)]),
-          child: const Center(
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.cancel, color: Colors.white),
-            SizedBox(width: 8),
-            Text('خسارة', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-          ])));
+      return const Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.check_circle, color: Colors.greenAccent),
+        SizedBox(width: 8),
+        Text('ربح', style: TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.bold)),
+      ]);
+    } else { // loss
+      return const Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.cancel, color: Colors.redAccent),
+        SizedBox(width: 8),
+        Text('خسارة', style: TextStyle(color: Colors.redAccent, fontSize: 18, fontWeight: FontWeight.bold)),
+      ]);
     }
   }
 
+  // ... باقي الويدجتس المساعدة تبقى كما هي ...
   Widget _buildDetailColumn(String title, dynamic value, Color valueColor) {
-    // ... الكود كما هو
     return Column(children: [
       Text(title, style: const TextStyle(color: Colors.white70, fontSize: 14)),
       const SizedBox(height: 8),
       if (value is IconData) Icon(value, color: valueColor, size: 30) else Text(value.toString(), style: TextStyle(color: valueColor, fontSize: 20, fontWeight: FontWeight.bold)),
     ]);
   }
-
+  
   Widget _buildExtraDetailRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.white60, size: 16),
-        const SizedBox(width: 6),
-        Text(text, style: const TextStyle(color: Colors.white70, fontSize: 14)),
-      ],
-    );
+    return Row(children: [
+      Icon(icon, color: Colors.white60, size: 16),
+      const SizedBox(width: 6),
+      Text(text, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+    ]);
   }
-
-  Widget _buildGlassCard({required Widget child}) {
-    // ... الكود كما هو
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(25.0),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-        child: Container(
-          decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-              borderRadius: BorderRadius.circular(25.0),
-              border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
-          child: child,
-        ),
-      ),
-    );
-  }
-
+  
   Widget _buildVipLockScreen() {
-    // ... الكود كما هو
-    return Center(
-      child: ElevatedButton(
-        onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SubscriptionPage())),
-        child: const Text("الترقية الآن"),
-      ),
-    );
+    return Center(child: ElevatedButton(
+      onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SubscriptionPage())),
+      child: const Text("الترقية الآن"),
+    ));
   }
 }
