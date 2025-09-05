@@ -157,7 +157,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            _launchURL('https://t.me/YourSupportUsername'); // !! استبدل بالرابط الصحيح !!
+            _launchURL('https://t.me/m/FIrEmovvOTU0'); // !! استبدل بالرابط الصحيح !!
           },
           backgroundColor: Colors.cyan,
           child: const Icon(Icons.support_agent, color: Colors.white),
@@ -236,11 +236,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // --- كل الويدجتس المساعدة الأخرى تبقى كما هي ---
   Widget _buildSocialButtons() {
     return Column(children: [
-      _buildSocialButton(label: 'YOUTUBE CHANNEL', iconAsset: 'assets/youtube_icon.png', gradient: const LinearGradient(colors: [Color(0xFFff4757), Color(0xFFff6b81)]), onPressed: () { _launchURL('https://youtube.com/YourChannel'); }),
+      _buildSocialButton(label: 'YOUTUBE CHANNEL', iconAsset: 'assets/youtube_icon.png', gradient: const LinearGradient(colors: [Color(0xFFff4757), Color(0xFFff6b81)]), onPressed: () { _launchURL('https://www.youtube.com/@ALPASHMO7ASB'); }),
       const SizedBox(height: 16),
-      _buildSocialButton(label: 'TELEGRAM GROUP', iconAsset: 'assets/telegram_icon.png', gradient: const LinearGradient(colors: [Color(0xFF2497d2), Color(0xFF34ace0)]), onPressed: () { _launchURL('https://t.me/YourGroup'); }),
+      _buildSocialButton(label: 'TELEGRAM GROUP', iconAsset: 'assets/telegram_icon.png', gradient: const LinearGradient(colors: [Color(0xFF2497d2), Color(0xFF34ace0)]), onPressed: () { _launchURL('https://t.me/ALPASHMO7ASB_TEAM'); }),
       const SizedBox(height: 16),
-      _buildSocialButton(label: 'INSTAGRAM PAGE', iconAsset: 'assets/instagram_icon.png', gradient: const LinearGradient(colors: [Color(0xFF833ab4), Color(0xFFfd1d1d), Color(0xFFfcb045)]), onPressed: () { _launchURL('https://instagram.com/YourPage'); }),
+      _buildSocialButton(label: 'INSTAGRAM PAGE', iconAsset: 'assets/instagram_icon.png', gradient: const LinearGradient(colors: [Color(0xFF833ab4), Color(0xFFfd1d1d), Color(0xFFfcb045)]), onPressed: () { _launchURL('https://www.instagram.com/alpashmo7asb?igsh=MWtzYzM1aWk2Mm82MQ=='); }),
     ]);
   }
   Widget _buildSocialButton({required String label, required String iconAsset, required Gradient gradient, required VoidCallback onPressed}) {
