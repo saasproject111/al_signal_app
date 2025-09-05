@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart'; // 1. استيراد الحزمة المطلوبة
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,6 +14,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  // ... كل متغيرات ودوال الحالة تبقى كما هي ...
   int _activeUsers = 7500;
   int _winTrades = 0;
   int _lossTrades = 0;
@@ -36,30 +38,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _setupTimers();
     _loadVipMessages();
   }
-
+  
+  // ... كل دوال initState و dispose تبقى كما هي ...
   void _setupAnimations() {
     _pulseAnimationController = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
     _pulseAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(CurvedAnimation(parent: _pulseAnimationController, curve: Curves.easeInOut));
     _bannerGlowController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
-    _bannerGlowAnimation = ColorTween(
-      begin: Colors.white.withOpacity(0.2),
-      end: Colors.yellow[700],
-    ).animate(CurvedAnimation(parent: _bannerGlowController, curve: Curves.easeIn));
+    _bannerGlowAnimation = ColorTween(begin: Colors.white.withOpacity(0.2), end: Colors.yellow[700]).animate(CurvedAnimation(parent: _bannerGlowController, curve: Curves.easeIn));
   }
-  
   void _setDailyGoals() {
     final random = Random();
     _dailyTradeTarget = 230 + random.nextInt(41);
     _dailyProfitRatio = 0.90 + random.nextDouble() * 0.05;
   }
-
   void _setupTimers() {
-    _numbersTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      _updateNumbers();
-    });
+    _numbersTimer = Timer.periodic(const Duration(seconds: 3), (timer) { _updateNumbers(); });
     _scheduleNextBannerUpdate();
   }
-
   Future<void> _loadVipMessages() async {
     try {
       final String messagesString = await rootBundle.loadString('assets/messages.txt');
@@ -71,42 +66,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() { _currentVipMessage = 'مرحبًا بك في عضوية VIP!'; });
     }
   }
-
   void _scheduleNextBannerUpdate() {
     if (!mounted) return;
     final randomDuration = Duration(minutes: 4 + Random().nextInt(5));
     _bannerTimer = Timer(randomDuration, () {
       if (_vipMessages.isNotEmpty) {
-        setState(() {
-          _currentVipMessage = _vipMessages[Random().nextInt(_vipMessages.length)];
-        });
+        setState(() { _currentVipMessage = _vipMessages[Random().nextInt(_vipMessages.length)]; });
         _bannerGlowController.forward().then((_) => _bannerGlowController.reverse());
       }
       _scheduleNextBannerUpdate();
     });
   }
-
   void _updateNumbers() {
     final now = DateTime.now();
     if (now.day != _currentDay) {
-      setState(() {
-        _currentDay = now.day;
-        _setDailyGoals();
-      });
+      setState(() { _currentDay = now.day; _setDailyGoals(); });
     }
     final sineValue = sin((now.hour * 3600 + now.minute * 60 + now.second) / (24 * 3600) * 2 * pi);
     final baseUsers = 7000 + (sineValue * 2000);
     final randomChange = Random().nextInt(21) - 10;
     final progressOfDay = (now.hour * 3600 + now.minute * 60 + now.second) / (24 * 3600);
     final currentTotalTrades = (_dailyTradeTarget * progressOfDay);
-    
     setState(() {
       _activeUsers = (baseUsers + randomChange).round();
       _winTrades = (currentTotalTrades * _dailyProfitRatio).round();
       _lossTrades = (currentTotalTrades * (1 - _dailyProfitRatio)).round();
     });
   }
-
   @override
   void dispose() {
     _numbersTimer?.cancel();
@@ -116,9 +102,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  // 2. دالة جديدة لفتح رابط تليجرام
+  Future<void> _launchTelegram() async {
+    // !! استبدل YourTelegramUsername بمعرف حسابك !!
+    final Uri url = Uri.parse('https://t.me/m/FIrEmovvOTU0');
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      // رسالة خطأ في حال لم يتمكن من فتح الرابط
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لا يمكن فتح الرابط')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // ... الكود هنا لم يتغير ...
     final String userName = FirebaseAuth.instance.currentUser?.displayName?.split(' ').first ?? 'المستخدم';
     return Container(
       decoration: const BoxDecoration(
@@ -131,6 +128,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
+        ),
+        // --- 3. إضافة الزر العائم هنا ---
+        floatingActionButton: FloatingActionButton(
+          onPressed: _launchTelegram,
+          backgroundColor: Colors.cyan,
+          child: const Icon(Icons.telegram, color: Colors.white),
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -159,47 +162,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
-
+  
+  // ... كل الويدجتس المساعدة الأخرى تبقى كما هي تمامًا ...
   Widget _buildLatestVipBanner() {
     return AnimatedBuilder(
       animation: _bannerGlowController,
       builder: (context, child) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(25.0),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(25.0),
-                border: Border.all(color: _bannerGlowAnimation.value!, width: 1.5),
-                boxShadow: [
-                  BoxShadow(color: _bannerGlowAnimation.value!, blurRadius: 10, spreadRadius: 2)
-                ],
-              ),
-              child: child,
-            ),
-          ),
-        );
+        return ClipRRect(borderRadius: BorderRadius.circular(25.0), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0), child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(25.0), border: Border.all(color: _bannerGlowAnimation.value!, width: 1.5), boxShadow: [BoxShadow(color: _bannerGlowAnimation.value!, blurRadius: 10, spreadRadius: 2)]),
+          child: child,
+        )));
       },
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.star_border_purple500_outlined, color: Colors.yellow, size: 20),
           const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              _currentVipMessage,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-          ),
+          Expanded(child: Text(_currentVipMessage, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis, textAlign: TextAlign.center)),
         ],
       ),
     );
@@ -208,27 +188,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildInfoCards() {
     final blinkingDot = ScaleTransition(
       scale: _pulseAnimation,
-      child: Container(
-        width: 10,
-        height: 10,
-        decoration: const BoxDecoration(
-          color: Colors.greenAccent,
-          shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: Colors.greenAccent, blurRadius: 5, spreadRadius: 1)],
-        ),
-      ),
+      child: Container(width: 10, height: 10, decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.greenAccent, blurRadius: 5, spreadRadius: 1)])),
     );
     return _buildGlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            _buildInfoItem(
-              title: 'عدد المستخدمين النشطين',
-              value: _activeUsers.toString(),
-              valueColor: Colors.greenAccent,
-              leadingWidget: blinkingDot,
-            ),
+            _buildInfoItem(title: 'عدد المستخدمين النشطين', value: _activeUsers.toString(), valueColor: Colors.greenAccent, leadingWidget: blinkingDot),
             _buildMarketStatus(title: 'OTC سوق', isOpen: true),
           ]),
           const Divider(color: Colors.white24, height: 32),
@@ -240,14 +207,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
-
+  
   Widget _buildWinLossItem({required int winCount, required int lossCount, required Widget leadingWidget}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        leadingWidget,
-        const SizedBox(width: 8),
-        const Text("صفقات اليوم", style: TextStyle(color: Colors.white70, fontSize: 14)),
-      ]),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [leadingWidget, const SizedBox(width: 8), const Text("صفقات اليوم", style: TextStyle(color: Colors.white70, fontSize: 14))]),
       const SizedBox(height: 8),
       Row(children: [
         const Icon(Icons.check_circle, color: Colors.greenAccent, size: 16),
@@ -258,7 +221,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ]),
     ]);
   }
-
+  
   Widget _buildInfoItem({required String title, required String value, required Color valueColor, Widget? leadingWidget}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
       Text(title, style: const TextStyle(color: Colors.white70, fontSize: 14)),

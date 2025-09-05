@@ -20,7 +20,6 @@ dependencies:
   country_picker: ^2.0.27
   google_nav_bar: ^5.0.6
   shimmer: ^3.0.0
-  vibration: ^1.9.0
   intl: ^0.19.0
 
 dev_dependencies:
