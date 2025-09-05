@@ -17,9 +17,10 @@ class _MainTabsPageState extends State<MainTabsPage> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
 
+  // قائمة الصفحات التي سيتم عرضها
   final List<Widget> _pages = <Widget>[
     const HomePage(),
-    LearningPage(),
+    const LearningPage(), // تم إرجاعها لـ const مؤقتًا
     const RecommendationsPage(),
     const SettingsPage(),
     const ProfilePage(),
@@ -56,37 +57,18 @@ class _MainTabsPageState extends State<MainTabsPage> {
             padding: const EdgeInsets.all(12),
             selectedIndex: _selectedIndex,
             onTabChange: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
               _pageController.animateToPage(
                 index,
-                // --- تم التعديل هنا ---
-                duration: const Duration(milliseconds: 400), // زيادة طفيفة في المدة
-                curve: Curves.easeInOut, // تغيير نوع الحركة لتكون أكثر سلاسة
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
               );
             },
             tabs: const [
-              GButton(
-                icon: Icons.home,
-                text: 'الرئيسية',
-              ),
-              GButton(
-                icon: Icons.school,
-                text: 'التعلّم',
-              ),
-              GButton(
-                icon: Icons.star,
-                text: 'توصيات',
-              ),
-              GButton(
-                icon: Icons.settings,
-                text: 'الإعدادات',
-              ),
-              GButton(
-                icon: Icons.person,
-                text: 'ملفي',
-              ),
+              GButton(icon: Icons.home, text: 'الرئيسية'),
+              GButton(icon: Icons.school, text: 'التعلّم'),
+              GButton(icon: Icons.star, text: 'توصيات'),
+              GButton(icon: Icons.settings, text: 'الإعدادات'),
+              GButton(icon: Icons.person, text: 'ملفي'),
             ],
           ),
         ),
