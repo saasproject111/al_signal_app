@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:my_app/screens/privacy_policy_page.dart'; // 1. استيراد الصفحات
+import 'package:my_app/screens/privacy_policy_page.dart';
 import 'package:my_app/screens/subscription_page.dart';
 import 'package:my_app/screens/terms_of_service_page.dart';
 
@@ -14,68 +14,63 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMixin {
-  Country? _selectedCountry;
-  String? _selectedPlatform;
-  bool _notificationsEnabled = true;
-  late AnimationController _entryAnimationController;
-  late List<Animation<Offset>> _slideAnimations;
-  final userRef = FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser?.uid);
-
-  @override
-  void initState() {
-    super.initState();
-    _setupAnimations();
+class _SettingsPageState extends State<SettingsPage> {
+  DocumentReference? get userRef {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    return FirebaseFirestore.instance.collection('users').doc(user.uid);
   }
 
-  void _setupAnimations() {
-    _entryAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
-    _slideAnimations = List.generate(3, (index) => Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero,).animate(CurvedAnimation(parent: _entryAnimationController, curve: Interval(0.2 * index, 0.7 + 0.2 * index, curve: Curves.decelerate))));
-  }
-  
   Future<void> _updateUserSetting(Map<String, dynamic> data) async {
-    await userRef.update(data);
+    await userRef?.update(data);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('الإعدادات', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(colors: [Color(0xFF0A4F46), Colors.black], begin: Alignment.topCenter, end: Alignment.bottomCenter),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [Color(0xFF0A4F46), Colors.black], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text('الإعدادات', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         ),
-        child: FutureBuilder<DocumentSnapshot>(
-          future: userRef.get(),
+        body: StreamBuilder<DocumentSnapshot>(
+          stream: userRef?.snapshots(),
           builder: (context, snapshot) {
-            if (!snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            
-            _entryAnimationController.forward();
-            final userData = snapshot.data!.data() as Map<String, dynamic>? ?? {};
-            _selectedPlatform = userData['platform'] ?? 'Quotex';
-            _notificationsEnabled = userData['notificationsEnabled'] ?? true;
-            try {
-              _selectedCountry = CountryService().findByName(userData['country'] ?? 'Egypt');
-            } catch (e) {
-              _selectedCountry = CountryService().findByCode('EG');
+            if (!snapshot.hasData || !snapshot.data!.exists) {
+              return const Center(child: Text('لا يمكن تحميل البيانات', style: TextStyle(color: Colors.white)));
             }
 
+            final userData = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+            final String selectedPlatform = userData['platform'] ?? 'Quotex';
+            final bool notificationsEnabled = userData['notificationsEnabled'] ?? true;
+            
+            final String savedCountryName = userData['country'] ?? 'Egypt';
+            Country? foundCountry;
+            try {
+              // --- تم تصحيح اسم الدالة هنا ---
+              foundCountry = CountryService().findByName(savedCountryName);
+            } catch (e) {
+              // Fallback in case of an error
+            }
+            Country selectedCountry = foundCountry ?? CountryService().findByCode('EG')!;
+
             return ListView(
-              padding: const EdgeInsets.only(top: 100, left: 16, right: 16, bottom: 20),
+              padding: const EdgeInsets.only(top: 20, left: 16, right: 16, bottom: 20),
               children: [
-                _buildAnimatedCard(animation: _slideAnimations[0], child: _buildCustomizationSection()),
+                _buildCustomizationSection(selectedCountry, selectedPlatform),
                 const SizedBox(height: 24),
-                _buildAnimatedCard(animation: _slideAnimations[1], child: _buildAccountSection()),
+                _buildAccountSection(notificationsEnabled),
                 const SizedBox(height: 24),
-                 _buildAnimatedCard(animation: _slideAnimations[2], child: _buildAboutSection()),
+                _buildAboutSection(),
               ],
             );
           },
@@ -84,10 +79,84 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
     );
   }
 
-  Widget _buildAnimatedCard({required Animation<Offset> animation, required Widget child}) {
-     return FadeTransition(
-      opacity: CurvedAnimation(parent: _entryAnimationController, curve: Curves.easeIn),
-      child: SlideTransition(position: animation, child: child),
+  // --- Widgets remain the same ---
+  Widget _buildCustomizationSection(Country country, String platform) {
+    return _buildGlassCard(
+      title: 'التخصيص',
+      children: [
+        _buildCountrySelector(country),
+        const Divider(color: Colors.white12),
+        _buildDropdownItem(
+          icon: Icons.computer,
+          label: 'المنصة',
+          value: platform,
+          items: ['Quotex', 'Binance', 'Bybit', 'أخرى'],
+          onChanged: (newValue) {
+            if (newValue != null) {
+              _updateUserSetting({'platform': newValue});
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAccountSection(bool notificationsEnabled) {
+    return _buildGlassCard(
+      title: 'الحساب والإشعارات',
+      children: [
+        SwitchListTile(
+          title: const Text('إشعارات التوصيات الفورية', style: TextStyle(color: Colors.white, fontSize: 16)),
+          value: notificationsEnabled,
+          onChanged: (bool value) {
+            _updateUserSetting({'notificationsEnabled': value});
+          },
+          secondary: const Icon(Icons.notifications_active_outlined, color: Colors.white70),
+          activeColor: Colors.tealAccent,
+        ),
+        const Divider(color: Colors.white12),
+        _buildListItem(
+          icon: Icons.star_purple500_outlined,
+          text: 'إدارة الاشتراك',
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SubscriptionPage()));
+          }
+        ),
+        const Divider(color: Colors.white12),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+          child: Row(children: [
+            const Icon(Icons.person_pin_outlined, color: Colors.white70),
+            const SizedBox(width: 16),
+            const Text("User ID:", style: TextStyle(color: Colors.white70)),
+            const Spacer(),
+            SelectableText(FirebaseAuth.instance.currentUser?.uid.substring(0, 8) ?? 'N/A', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+          ]),
+        )
+      ],
+    );
+  }
+
+  Widget _buildAboutSection() {
+    return _buildGlassCard(
+      title: 'عن التطبيق',
+      children: [
+        _buildListItem(
+          icon: Icons.description_outlined,
+          text: 'شروط الخدمة',
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const TermsOfServicePage()));
+          }
+        ),
+        const Divider(color: Colors.white12),
+        _buildListItem(
+          icon: Icons.privacy_tip_outlined,
+          text: 'سياسة الخصوصية',
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()));
+          }
+        ),
+      ],
     );
   }
   
@@ -103,9 +172,12 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
             border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 4.0),
+                child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              ),
               const Divider(height: 24, color: Colors.white24),
               ...children,
             ]),
@@ -114,120 +186,48 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
       ),
     );
   }
-  
-  Widget _buildCustomizationSection() {
-    return _buildGlassCard(
-      title: 'التخصيص',
-      children: [
-         _buildCountrySelector(),
-         const Divider(color: Colors.white10),
-        _buildDropdownItem(
-          icon: Icons.computer,
-          label: 'المنصة',
-          value: _selectedPlatform!,
-          items: ['Quotex', 'Binance', 'Bybit', 'أخرى'],
-          onChanged: (newValue) {
-            if (newValue != null) {
-              setState(() { _selectedPlatform = newValue; });
-              _updateUserSetting({'platform': newValue});
-            }
-          },
-        ),
-      ],
-    );
-  }
 
-  Widget _buildAccountSection() {
-    return _buildGlassCard(
-      title: 'الحساب والإشعارات',
-      children: [
-        SwitchListTile(
-          title: const Text('إشعارات التوصيات الفورية', style: TextStyle(color: Colors.white, fontSize: 16)),
-          value: _notificationsEnabled,
-          onChanged: (bool value) {
-            setState(() { _notificationsEnabled = value; });
-            _updateUserSetting({'notificationsEnabled': value});
-          },
-          secondary: const Icon(Icons.notifications_active_outlined, color: Colors.white70),
-          activeColor: Colors.tealAccent,
-        ),
-         const Divider(color: Colors.white10),
-        _buildListItem(
-          icon: Icons.star_purple500_outlined,
-          text: 'إدارة الاشتراك',
-          onTap: () {
-             Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SubscriptionPage()));
-          }
-        ),
-        const Divider(color: Colors.white10),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(children: [
-            const Icon(Icons.person_pin_outlined, color: Colors.white70),
-            const SizedBox(width: 16),
-            const Text("User ID:", style: TextStyle(color: Colors.white70)),
-            const Spacer(),
-            SelectableText(FirebaseAuth.instance.currentUser?.uid.substring(0, 8) ?? 'N/A', style: const TextStyle(color: Colors.white54, fontSize: 12)),
-          ]),
-        )
-      ],
-    );
-  }
-
-  // --- تم التعديل هنا ---
-  Widget _buildAboutSection() {
-    return _buildGlassCard(
-      title: 'عن التطبيق',
-      children: [
-        _buildListItem(
-          icon: Icons.description_outlined,
-          text: 'شروط الخدمة',
-          onTap: () {
-            // 2. ربط الزر بصفحة شروط الخدمة
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const TermsOfServicePage()));
-          }
-        ),
-        const Divider(color: Colors.white10),
-        _buildListItem(
-          icon: Icons.privacy_tip_outlined,
-          text: 'سياسة الخصوصية',
-          onTap: () {
-            // 3. ربط الزر بصفحة سياسة الخصوصية
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()));
-          }
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildCountrySelector() {
-    return InkWell(
+  Widget _buildCountrySelector(Country selectedCountry) {
+    return ListTile(
+      leading: const Icon(Icons.flag_outlined, color: Colors.white70),
+      title: const Text('الدولة', style: TextStyle(fontSize: 16, color: Colors.white)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('${selectedCountry.flagEmoji} ${selectedCountry.name}', style: const TextStyle(fontSize: 16, color: Colors.white)),
+          const SizedBox(width: 8),
+          const Icon(Icons.arrow_drop_down, color: Colors.white70),
+        ],
+      ),
       onTap: () {
         showCountryPicker(
           context: context,
+          countryListTheme: CountryListThemeData(
+            backgroundColor: Colors.blueGrey[900],
+            textStyle: const TextStyle(color: Colors.white),
+            bottomSheetHeight: MediaQuery.of(context).size.height * 0.8,
+            borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+            inputDecoration: InputDecoration(
+              hintText: 'ابحث عن دولتك',
+              hintStyle: const TextStyle(color: Colors.white70),
+              prefixIcon: const Icon(Icons.search, color: Colors.white70),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+          ),
           onSelect: (Country country) {
-            setState(() { _selectedCountry = country; });
             _updateUserSetting({'country': country.name});
           },
         );
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(children: [
-          const Icon(Icons.flag_outlined, color: Colors.white70),
-          const SizedBox(width: 16),
-          const Expanded(child: Text('الدولة', style: TextStyle(fontSize: 16, color: Colors.white))),
-          Text('${_selectedCountry?.flagEmoji ?? ''} ${_selectedCountry?.name ?? ''}', style: const TextStyle(fontSize: 16, color: Colors.white)),
-          const SizedBox(width: 8),
-          const Icon(Icons.arrow_drop_down, color: Colors.white70),
-        ]),
-      ),
     );
   }
 
   Widget _buildDropdownItem({required IconData icon, required String label, required String value, required List<String> items, required ValueChanged<String?> onChanged}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       child: Row(children: [
         Icon(icon, color: Colors.white70),
         const SizedBox(width: 16),
@@ -238,6 +238,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
             value: value,
             iconEnabledColor: Colors.white70,
             style: const TextStyle(color: Colors.white, fontSize: 16),
+            underline: const SizedBox(),
             items: items.map<DropdownMenuItem<String>>((String val) => DropdownMenuItem<String>(value: val, child: Text(val))).toList(),
             onChanged: onChanged,
           ),
@@ -247,18 +248,11 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
   }
 
   Widget _buildListItem({required IconData icon, required String text, required VoidCallback onTap}) {
-    return InkWell(
+    return ListTile(
+      leading: Icon(icon, color: Colors.white70),
+      title: Text(text, style: const TextStyle(color: Colors.white, fontSize: 16)),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white70),
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0),
-        child: Row(children: [
-          Icon(icon, color: Colors.white70),
-          const SizedBox(width: 16),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 16, color: Colors.white))),
-          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white70),
-        ]),
-      ),
     );
   }
 }
-

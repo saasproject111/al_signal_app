@@ -3,8 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:my_app/screens/subscription_page.dart';
+import 'package:shimmer/shimmer.dart';
 
-// كلاس Recommendation يبقى كما هو
+// كلاس لتمثيل بيانات التوصية
 class Recommendation {
   final String pair;
   final String direction;
@@ -12,6 +13,7 @@ class Recommendation {
   final String entryTime;
   final String? forecast;
   final String? payout;
+  final String? result;
   final bool isVip;
 
   const Recommendation({
@@ -21,9 +23,11 @@ class Recommendation {
     required this.entryTime,
     this.forecast,
     this.payout,
+    this.result,
     required this.isVip,
   });
 
+  // دالة لتحويل البيانات من Firestore إلى كائن Recommendation
   factory Recommendation.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data() as Map<String, dynamic>;
     return Recommendation(
@@ -33,6 +37,7 @@ class Recommendation {
       entryTime: data['entryTime'] ?? '--:--:--',
       forecast: data['forecast'],
       payout: data['payout'],
+      result: data['result'],
       isVip: data['isVip'] ?? false,
     );
   }
@@ -45,12 +50,19 @@ class RecommendationsPage extends StatefulWidget {
 }
 
 class _RecommendationsPageState extends State<RecommendationsPage> {
+  // دالة لجلب حالة اشتراك المستخدم
   Future<bool> _fetchUserVipStatus() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return false;
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     if (!userDoc.exists) return false;
     return userDoc.data()?['isVip'] ?? false;
+  }
+
+  // دالة التحديث عند السحب
+  Future<void> _handleRefresh() async {
+    // StreamBuilder يقوم بالتحديث تلقائيًا، لكن هذا يعطي تأكيدًا للمستخدم
+    await Future.delayed(const Duration(seconds: 1));
   }
 
   @override
@@ -70,7 +82,9 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
         child: FutureBuilder<bool>(
           future: _fetchUserVipStatus(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
             final bool isUserVip = snapshot.data ?? false;
             return _buildRecommendationsList(isUserVip);
           },
@@ -79,45 +93,77 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     );
   }
 
-  // --- تم تعديل هذه الويدجت بالكامل ---
+  // ويدجت بناء القائمة مع ميزة السحب للتحديث والقفل
   Widget _buildRecommendationsList(bool isUserVip) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('recommendations').orderBy('timestamp', descending: true).limit(10).snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const Center(child: Text('لا توجد توصيات حاليًا', style: TextStyle(color: Colors.white)));
+    return RefreshIndicator(
+      onRefresh: _handleRefresh,
+      backgroundColor: Colors.blueGrey[900],
+      color: Colors.tealAccent,
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('recommendations').orderBy('timestamp', descending: true).limit(10).snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
+            return _buildShimmerLoadingList();
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Stack(children: [
+              const Center(child: Text('لا توجد توصيات حاليًا', style: TextStyle(color: Colors.white))),
+              if (!isUserVip) _buildVipLockOverlay(),
+            ]);
+          }
 
-        final recommendations = snapshot.data!.docs.map((doc) => Recommendation.fromFirestore(doc)).toList();
+          final recommendations = snapshot.data!.docs.map((doc) => Recommendation.fromFirestore(doc)).toList();
 
-        // سنعرض كل التوصيات في الخلفية دائمًا
-        return Stack(
-          children: [
-            // الطبقة السفلية: قائمة التوصيات
-            ListView.builder(
-              padding: const EdgeInsets.only(top: 120, bottom: 20, left: 16, right: 16),
-              itemCount: recommendations.length,
-              itemBuilder: (context, index) {
-                final rec = recommendations[index];
-                return _buildRecommendationCard(rec);
-              },
-            ),
-
-            // الطبقة العلوية: شاشة القفل (تظهر فقط للمستخدم غير المشترك)
-            if (!isUserVip)
-              _buildVipLockOverlay(),
-          ],
-        );
-      },
+          return Stack(
+            children: [
+              ListView.builder(
+                padding: const EdgeInsets.only(top: 120, bottom: 20, left: 16, right: 16),
+                itemCount: recommendations.length,
+                itemBuilder: (context, index) {
+                  final rec = recommendations[index];
+                  return _buildRecommendationCard(rec);
+                },
+              ),
+              if (!isUserVip) _buildVipLockOverlay(),
+            ],
+          );
+        },
+      ),
     );
   }
-  
-  // ويدجت جديدة لشاشة القفل الشفافة
+
+  // --- ويدجتس مساعدة ---
+
+  Widget _buildShimmerLoadingList() {
+    return ListView(
+      padding: const EdgeInsets.only(top: 120, bottom: 20, left: 16, right: 16),
+      children: List.generate(3, (index) => _buildShimmerCard()),
+    );
+  }
+
+  Widget _buildShimmerCard() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[850]!,
+      highlightColor: Colors.grey[800]!,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 20.0),
+        child: Container(
+          height: 200,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(25.0),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildVipLockOverlay() {
     return ClipRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0), // درجة الضبابية
+        filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
         child: Container(
-          color: Colors.black.withOpacity(0.7), // درجة الشفافية
+          color: Colors.black.withOpacity(0.7),
           child: Center(
             child: Padding(
               padding: const EdgeInsets.all(24.0),
@@ -126,29 +172,14 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                 children: [
                   Icon(Icons.lock_outline, color: Colors.yellow[700], size: 80),
                   const SizedBox(height: 20),
-                  const Text(
-                    'محتوى حصري للمشتركين',
-                    style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
+                  const Text('محتوى حصري للمشتركين', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  const Text(
-                    'قم بالترقية إلى عضوية VIP لرؤية جميع التوصيات الفورية بوضوح.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
+                  const Text('قم بالترقية لرؤية جميع التوصيات الفورية بوضوح.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16)),
                   const SizedBox(height: 30),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow[700],
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SubscriptionPage()));
-                    },
-                    child: const Text(
-                      'الترقية الآن',
-                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                    ),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow[700], padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SubscriptionPage())),
+                    child: const Text('الترقية الآن', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                   )
                 ],
               ),
@@ -159,11 +190,19 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     );
   }
 
-  // بطاقة التوصية (لم تتغير)
   Widget _buildRecommendationCard(Recommendation rec) {
     final bool isCall = rec.direction == 'call';
+    Color borderColor;
+    if (rec.result == 'win') {
+      borderColor = Colors.greenAccent;
+    } else if (rec.result == 'loss') {
+      borderColor = Colors.redAccent;
+    } else {
+      borderColor = Colors.white.withOpacity(0.2);
+    }
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 20.0),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(25.0),
         child: BackdropFilter(
@@ -172,7 +211,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
             decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(25.0),
-                border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
+                border: Border.all(color: borderColor, width: 1.5)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -197,6 +236,8 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                       ],
                     ),
                   ],
+                  const Divider(color: Colors.white24, height: 24),
+                  _buildResultRow(rec.result),
                 ],
               ),
             ),
@@ -204,6 +245,27 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildResultRow(String? result) {
+    if (result == null) {
+      return Shimmer.fromColors(
+          baseColor: Colors.grey[600]!,
+          highlightColor: Colors.grey[500]!,
+          child: const Text('في انتظار النتيجة...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)));
+    } else if (result == 'win') {
+      return const Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.check_circle, color: Colors.greenAccent),
+        SizedBox(width: 8),
+        Text('ربح', style: TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.bold)),
+      ]);
+    } else {
+      return const Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.cancel, color: Colors.redAccent),
+        SizedBox(width: 8),
+        Text('خسارة', style: TextStyle(color: Colors.redAccent, fontSize: 18, fontWeight: FontWeight.bold)),
+      ]);
+    }
   }
 
   Widget _buildDetailColumn(String title, dynamic value, Color valueColor) {
@@ -222,3 +284,4 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     ]);
   }
 }
+
