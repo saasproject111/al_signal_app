@@ -5,61 +5,81 @@ admin.initializeApp();
 const db = admin.firestore();
 
 exports.telegramWebhook = functions.https.onRequest(async (req, res) => {
-  if (req.method !== "POST") {
-    return res.status(405).send("Method Not Allowed");
-  }
+  // استجب لتليجرام فورًا لمنع أي مشاكل
+  res.status(200).send("OK");
 
   try {
     const update = req.body;
     const message = update.message || update.channel_post;
 
     if (!message || !message.text) {
-      console.log("No valid message text found.");
-      return res.status(200).send("OK");
+      console.log("No valid message text found. Exiting.");
+      return;
     }
+    
     const messageText = message.text;
+    const upperCaseText = messageText.toUpperCase();
 
-    // --- تحليل الرسالة باستخدام التعبيرات النمطية ---
-    const pairMatch = messageText.match(/💳\s*([^\s\n]+)/);
-    const timeframeMatch = messageText.match(/🔥\s*([^\s\n]+)/);
-    const entryTimeMatch = messageText.match(/⌛️\s*([^\s\n]+)/);
-    const directionMatch = messageText.match(/🔽\s*([^\s\n]+)/i) || messageText.match(/🔼\s*([^\s\n]+)/i); // للتعامل مع call/put
-    const forecastMatch = messageText.match(/📈\s*Forecast:\s*([\d.]+)%/);
-    const payoutMatch = messageText.match(/💸\s*Payout:\s*([\d.]+)%/);
+    // --- الحالة الأولى: الرسالة هي نتيجة ---
+    if (upperCaseText.includes("WIN") || upperCaseText.includes("LOSS")) {
+      const result = upperCaseText.includes("WIN") ? "win" : "loss";
+      
+      const querySnapshot = await db.collection("recommendations")
+        .where("status", "==", "active")
+        .orderBy("timestamp", "desc")
+        .limit(1)
+        .get();
 
-    // إذا لم يتم العثور على البيانات الأساسية، تجاهل الرسالة
-    if (!pairMatch || !timeframeMatch || !entryTimeMatch || !directionMatch) {
-        console.log("Essential data not found in message. Ignoring.");
-        return res.status(200).send("OK");
+      if (!querySnapshot.empty) {
+        const docId = querySnapshot.docs[0].id;
+        await db.collection("recommendations").doc(docId).update({
+          result: result,
+          status: "completed",
+        });
+        console.log(`Result updated to ${result}`);
+      }
+    } 
+    // --- الحالة الثانية: الرسالة هي توصية جديدة ---
+    else if (messageText.includes("💳")) {
+      const lines = messageText.split('\n').filter(line => line.trim() !== '');
+      const recommendationData = {};
+
+      // الطريقة الجديدة لتحليل كل سطر على حدة
+      for (const line of lines) {
+        if (line.startsWith('💳')) {
+          recommendationData.pair = line.replace('💳', '').trim();
+        } else if (line.startsWith('🔥')) {
+          recommendationData.timeframe = line.replace('🔥', '').trim();
+        } else if (line.startsWith('⌛️')) {
+          recommendationData.entryTime = line.replace('⌛️', '').trim();
+        } else if (line.startsWith('🔽') || line.startsWith('🔼')) {
+          // استخراج الكلمة التي بعد الإيموجي
+          recommendationData.direction = line.split(' ')[1]?.toLowerCase();
+        } else if (line.includes('Forecast:')) {
+          const match = line.match(/([\d.]+)%/);
+          if (match) recommendationData.forecast = match[1];
+        } else if (line.includes('Payout:')) {
+          const match = line.match(/([\d.]+)%/);
+          if (match) recommendationData.payout = match[1];
+        }
+      }
+      
+      // التأكد من وجود البيانات الأساسية قبل الحفظ
+      if (recommendationData.pair && recommendationData.timeframe && recommendationData.entryTime && recommendationData.direction) {
+        recommendationData.status = "active";
+        recommendationData.result = null;
+        recommendationData.isVip = true;
+        recommendationData.timestamp = admin.firestore.Timestamp.now();
+        
+        console.log("Attempting to add document:", JSON.stringify(recommendationData, null, 2));
+        await db.collection("recommendations").add(recommendationData);
+        console.log("Successfully added new recommendation.");
+      } else {
+         console.log("Essential data missing after parsing. Ignoring.", recommendationData);
+      }
     }
 
-    const pair = pairMatch[1];
-    const timeframe = timeframeMatch[1];
-    const entryTime = entryTimeMatch[1];
-    const direction = directionMatch[1];
-    const forecast = forecastMatch ? forecastMatch[1] : null;
-    const payout = payoutMatch ? payoutMatch[1] : null;
-    // ----------------------------------------------------
-
-    // --- حفظ البيانات الجديدة في Firestore ---
-    await db.collection("recommendations").add({
-      pair: pair,
-      direction: direction,
-      timeframe: timeframe,
-      entryTime: entryTime,
-      forecast: forecast,
-      payout: payout,
-      status: "نشطة", // Status will be updated later
-      result: null, // Result will be updated later
-      isVip: true, // Assuming these are VIP signals
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
-    // ------------------------------------------
-
-    console.log("Successfully parsed and added rich recommendation:", pair);
-    return res.status(200).send("OK");
   } catch (error) {
-    console.error("Error processing message:", error);
-    return res.status(500).send("Internal Server Error");
+    console.error("CRITICAL ERROR:", error);
   }
 });

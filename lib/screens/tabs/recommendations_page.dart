@@ -3,9 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:my_app/screens/subscription_page.dart';
-import 'package:shimmer/shimmer.dart';
 
-// كلاس Recommendation يبقى كما هو
+// 1. تم تبسيط كلاس Recommendation
 class Recommendation {
   final String pair;
   final String direction;
@@ -13,7 +12,6 @@ class Recommendation {
   final String entryTime;
   final String? forecast;
   final String? payout;
-  final String? result;
   final bool isVip;
 
   const Recommendation({
@@ -23,7 +21,6 @@ class Recommendation {
     required this.entryTime,
     this.forecast,
     this.payout,
-    this.result,
     required this.isVip,
   });
 
@@ -36,7 +33,6 @@ class Recommendation {
       entryTime: data['entryTime'] ?? '--:--:--',
       forecast: data['forecast'],
       payout: data['payout'],
-      result: data['result'],
       isVip: data['isVip'] ?? false,
     );
   }
@@ -95,8 +91,6 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
 
         if (!isUserVip && filteredRecommendations.isEmpty) return _buildVipLockScreen();
 
-        // --- تم التعديل هنا ---
-        // لم نعد نستخدم Column، بل نعرض البطاقة مباشرة
         return ListView.builder(
           padding: const EdgeInsets.only(top: 120, bottom: 20, left: 16, right: 16),
           itemCount: filteredRecommendations.length,
@@ -109,32 +103,22 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     );
   }
 
-  // ويدجت بناء بطاقة التوصية المحدثة
+  // 2. تم تبسيط بطاقة التوصية
   Widget _buildRecommendationCard(Recommendation rec) {
     final bool isCall = rec.direction == 'call';
     
-    // تحديد لون الحدود بناءً على النتيجة
-    Color borderColor;
-    if (rec.result == 'win') {
-      borderColor = Colors.greenAccent;
-    } else if (rec.result == 'loss') {
-      borderColor = Colors.redAccent;
-    } else {
-      borderColor = Colors.white.withOpacity(0.2);
-    }
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20.0),
+      padding: const EdgeInsets.only(bottom: 16.0),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(25.0),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           child: Container(
+            // لون الحدود الآن ثابت
             decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(25.0),
-                // استخدام لون الحدود المتغير
-                border: Border.all(color: borderColor, width: 1.5)),
+                border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -159,9 +143,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                       ],
                     ),
                   ],
-                  // --- إضافة قسم النتيجة المدمج هنا ---
-                  const Divider(color: Colors.white24, height: 24),
-                  _buildResultRow(rec.result),
+                  // 3. تم حذف قسم النتيجة من هنا
                 ],
               ),
             ),
@@ -169,28 +151,6 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
         ),
       ),
     );
-  }
-
-  // ويدجت جديدة لعرض النتيجة داخل البطاقة
-  Widget _buildResultRow(String? result) {
-    if (result == null) {
-      return Shimmer.fromColors(
-          baseColor: Colors.grey[600]!,
-          highlightColor: Colors.grey[500]!,
-          child: const Text('في انتظار النتيجة...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)));
-    } else if (result == 'win') {
-      return const Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.check_circle, color: Colors.greenAccent),
-        SizedBox(width: 8),
-        Text('ربح', style: TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.bold)),
-      ]);
-    } else { // loss
-      return const Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.cancel, color: Colors.redAccent),
-        SizedBox(width: 8),
-        Text('خسارة', style: TextStyle(color: Colors.redAccent, fontSize: 18, fontWeight: FontWeight.bold)),
-      ]);
-    }
   }
 
   // ... باقي الويدجتس المساعدة تبقى كما هي ...
