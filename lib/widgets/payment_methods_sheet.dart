@@ -1,50 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-class PaymentMethodsSheet extends StatefulWidget {
+// تم تحويلها إلى StatelessWidget لضمان البساطة والأداء
+class PaymentMethodsSheet extends StatelessWidget {
   const PaymentMethodsSheet({super.key});
-
-  @override
-  State<PaymentMethodsSheet> createState() => _PaymentMethodsSheetState();
-}
-
-class _PaymentMethodsSheetState extends State<PaymentMethodsSheet> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late List<Animation<double>> _animations;
-
-  final List<Map<String, String>> paymentOptions = [
-    {'name': 'Visa / Mastercard', 'logo': 'assets/visa_mastercard.png'},
-    {'name': 'USDT', 'logo': 'assets/usdt.png'},
-    {'name': 'Skrill', 'logo': 'assets/skrill.png'},
-    {'name': 'RedotPay', 'logo': 'assets/redotpay.png'},
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _animations = List.generate(
-      paymentOptions.length,
-      (index) => Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _controller,
-          curve: Interval(0.2 * index, 0.5 + 0.2 * index, curve: Curves.easeOut),
-        ),
-      ),
-    );
-
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,18 +45,29 @@ class _PaymentMethodsSheetState extends State<PaymentMethodsSheet> with SingleTi
                   style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 24),
-                ...List.generate(paymentOptions.length, (index) {
-                  return FadeTransition(
-                    opacity: _animations[index],
-                    child: _buildPaymentOption(
-                      logoAsset: paymentOptions[index]['logo']!,
-                      name: paymentOptions[index]['name']!,
-                      onTap: () {
-                        // Handle payment option tap
-                      },
-                    ),
-                  );
-                }),
+                _buildPaymentOption(
+                  logoAsset: 'assets/visa_mastercard.png',
+                  name: 'Visa / Mastercard',
+                  onTap: () {},
+                ),
+                const Divider(color: Colors.white24),
+                _buildPaymentOption(
+                  logoAsset: 'assets/usdt.png',
+                  name: 'USDT',
+                  onTap: () {},
+                ),
+                const Divider(color: Colors.white24),
+                _buildPaymentOption(
+                  logoAsset: 'assets/skrill.png',
+                  name: 'Skrill',
+                  onTap: () {},
+                ),
+                const Divider(color: Colors.white24),
+                _buildPaymentOption(
+                  logoAsset: 'assets/redotpay.png',
+                  name: 'RedotPay',
+                  onTap: () {},
+                ),
                 const SizedBox(height: 24),
                 _buildTrustBadges(),
               ],
@@ -149,8 +119,9 @@ class _PaymentMethodsSheetState extends State<PaymentMethodsSheet> with SingleTi
           style: TextStyle(color: Colors.white70, fontSize: 14),
         ),
         const SizedBox(width: 20),
-        Image.asset('assets/visa_mastercard.png', height: 25, errorBuilder: (c,e,s) => const SizedBox(width: 40)),
+        Image.asset('assets/visa_mastercard.png', height: 25, errorBuilder: (c, e, s) => const SizedBox(width: 40)),
       ],
     );
   }
 }
+

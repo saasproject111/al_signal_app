@@ -29,17 +29,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerPr
     super.dispose();
   }
 
-  void _showPaymentMethods(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return const PaymentMethodsSheet();
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -190,8 +179,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerPr
               if (!isFree)
                 Padding(
                   padding: const EdgeInsets.only(top: 10.0),
-                  // --- تم التعديل هنا ---
-                  child: Builder( // استخدام Builder للحصول على سياق صحيح
+                  child: Builder(
                     builder: (buttonContext) {
                       return ElevatedButton(
                         style: ElevatedButton.styleFrom(
@@ -199,7 +187,16 @@ class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerPr
                           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        onPressed: () => _showPaymentMethods(buttonContext),
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: buttonContext,
+                            backgroundColor: Colors.transparent,
+                            isScrollControlled: true,
+                            builder: (sheetContext) {
+                              return const PaymentMethodsSheet();
+                            },
+                          );
+                        },
                         child: const Text('اختر الخطة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
                       );
                     }
