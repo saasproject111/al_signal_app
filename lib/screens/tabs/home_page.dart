@@ -47,7 +47,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _setDailyGoals();
     _setupTimers();
     _loadVipMessages();
-    _fetchPrices();
+    _fetchPrices(); // جلب الأسعار عند بدء التشغيل
   }
   
   // --- دوال الإعداد والتشغيل ---
@@ -73,12 +73,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _loadVipMessages() async {
     try {
       final String messagesString = await rootBundle.loadString('assets/messages.txt');
-      setState(() {
-        _vipMessages = messagesString.split('\n').where((line) => line.isNotEmpty).toList();
-        _currentVipMessage = _vipMessages.isNotEmpty ? _vipMessages[Random().nextInt(_vipMessages.length)] : 'مرحبًا!';
-      });
+      if(mounted) {
+        setState(() {
+          _vipMessages = messagesString.split('\n').where((line) => line.isNotEmpty).toList();
+          _currentVipMessage = _vipMessages.isNotEmpty ? _vipMessages[Random().nextInt(_vipMessages.length)] : 'مرحبًا!';
+        });
+      }
     } catch (e) {
-      setState(() { _currentVipMessage = 'مرحبًا!'; });
+       if(mounted) setState(() { _currentVipMessage = 'مرحبًا!'; });
     }
   }
 
@@ -87,7 +89,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final randomDuration = Duration(minutes: 4 + Random().nextInt(5));
     _bannerTimer = Timer(randomDuration, () {
       if (_vipMessages.isNotEmpty) {
-        setState(() { _currentVipMessage = _vipMessages[Random().nextInt(_vipMessages.length)]; });
+        if(mounted) setState(() { _currentVipMessage = _vipMessages[Random().nextInt(_vipMessages.length)]; });
         _bannerGlowController.forward().then((_) => _bannerGlowController.reverse());
       }
       _scheduleNextBannerUpdate();
@@ -211,8 +213,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // التبديل بين أماكن الويدجتس
                 _buildWinLossItem(winCount: _winTrades, lossCount: _lossTrades, leadingWidget: blinkingDot),
                 _buildInfoItem(title: 'عدد المستخدمين النشطين', value: _activeUsers.toString(), valueColor: Colors.greenAccent, leadingWidget: blinkingDot),
               ],
@@ -231,7 +233,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
   
-  // ... كل الويدجتس المساعدة الأخرى تبقى كما هي ...
+  // --- كل الويدجتس المساعدة الأخرى تبقى كما هي ---
   Widget _buildSocialButtons() {
     return Column(children: [
       _buildSocialButton(label: 'YOUTUBE CHANNEL', iconAsset: 'assets/youtube_icon.png', gradient: const LinearGradient(colors: [Color(0xFFff4757), Color(0xFFff6b81)]), onPressed: () { _launchURL('https://youtube.com/YourChannel'); }),
@@ -245,7 +247,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return ElevatedButton(onPressed: onPressed, style: ElevatedButton.styleFrom(padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)), elevation: 5, shadowColor: Colors.black.withOpacity(0.5)), child: Ink(decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(30)), child: Container(padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Image.asset(iconAsset, height: 28, width: 28), const SizedBox(width: 12), Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, shadows: [Shadow(blurRadius: 2.0, color: Colors.black38, offset: Offset(1, 1))]))]))));
   }
   Widget _buildLatestVipBanner() {
-    return AnimatedBuilder(animation: _bannerGlowController, builder: (context, child) => ClipRRect(borderRadius: BorderRadius.circular(25.0), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0), child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(25.0), border: Border.all(color: _bannerGlowAnimation.value!, width: 1.5), boxShadow: [BoxShadow(color: _bannerGlowAnimation.value!, blurRadius: 10, spreadRadius: 2)]), child: child))), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.star_border_purple500_outlined, color: Colors.yellow, size: 20), const SizedBox(width: 10), Expanded(child: Text(_currentVipMessage, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis, textAlign: TextAlign.center))]));
+    return AnimatedBuilder(animation: _bannerGlowController, builder: (context, child) => ClipRRect(borderRadius: BorderRadius.circular(25.0), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0), child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(25.0), border: Border.all(color: _bannerGlowAnimation.value!, width: 1.5), boxShadow: [BoxShadow(color: _bannerGlowAnimation.value!, blurRadius: 10, spreadRadius: 2)]), child: child))), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.star_border_purple500_outlined, color: Colors.yellow, size: 20), const SizedBox(width: 10), Expanded(child: Text(_currentVipMessage, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, textAlign: TextAlign.center))]));
   }
   Widget _buildWinLossItem({required int winCount, required int lossCount, required Widget leadingWidget}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.center, children: [Row(mainAxisAlignment: MainAxisAlignment.center, children: [leadingWidget, const SizedBox(width: 8), const Text("صفقات اليوم", style: TextStyle(color: Colors.white70, fontSize: 14))]), const SizedBox(height: 8), Row(children: [const Icon(Icons.check_circle, color: Colors.greenAccent, size: 16), Text(" ${winCount.toString()} : WIN", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)), const SizedBox(width: 12), const Icon(Icons.cancel, color: Colors.redAccent, size: 16), Text(" ${lossCount.toString()} : LOSS", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))])]);

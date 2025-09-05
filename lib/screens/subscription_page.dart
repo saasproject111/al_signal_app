@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/widgets/payment_methods_sheet.dart';
+
+enum SubscriptionPlan { monthly, yearly }
 
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
@@ -8,28 +11,15 @@ class SubscriptionPage extends StatefulWidget {
 }
 
 class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerProviderStateMixin {
-  // --- تم التعديل هنا ---
-  bool _isYearly = false; // القيمة الافتراضية الآن هي "شهري"
-
+  bool _isYearly = false;
   late AnimationController _controller;
   late List<Animation<double>> _animations;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-    _animations = List.generate(
-      3,
-      (index) => Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _controller,
-          curve: Interval(0.2 * index, 0.6 + 0.2 * index, curve: Curves.easeOutCubic),
-        ),
-      ),
-    );
+    _controller = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
+    _animations = List.generate(3, (index) => Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Interval(0.2 * index, 0.6 + 0.2 * index, curve: Curves.easeOutCubic))));
     _controller.forward();
   }
 
@@ -37,6 +27,17 @@ class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerPr
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _showPaymentMethods(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return const PaymentMethodsSheet();
+      },
+    );
   }
 
   @override
@@ -53,11 +54,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerPr
       ),
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0A4F46), Colors.black],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+          gradient: LinearGradient(colors: [Color(0xFF0A4F46), Colors.black], begin: Alignment.topCenter, end: Alignment.bottomCenter),
         ),
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
@@ -172,13 +169,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerPr
               if (isRecommended) const SizedBox(height: 10),
               Text(title, style: TextStyle(color: borderColor, fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              if (!isFree)
-                Text(
-                  _isYearly ? yearlyPrice! : monthlyPrice!,
-                  style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
-                ),
-              if (isFree)
-                Text(price!, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+              if (!isFree) Text(_isYearly ? yearlyPrice! : monthlyPrice!, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+              if (isFree) Text(price!, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
               Text(_isYearly && !isFree ? '/ سنة' : (isFree ? period! : '/ شهر'), style: const TextStyle(color: Colors.white70)),
               const Divider(color: Colors.white24, height: 30),
               Column(
@@ -198,14 +190,19 @@ class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerPr
               if (!isFree)
                 Padding(
                   padding: const EdgeInsets.only(top: 10.0),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: borderColor,
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    onPressed: () {},
-                    child: const Text('اختر الخطة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+                  // --- تم التعديل هنا ---
+                  child: Builder( // استخدام Builder للحصول على سياق صحيح
+                    builder: (buttonContext) {
+                      return ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: borderColor,
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () => _showPaymentMethods(buttonContext),
+                        child: const Text('اختر الخطة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+                      );
+                    }
                   ),
                 ),
             ],
@@ -215,3 +212,4 @@ class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerPr
     );
   }
 }
+
