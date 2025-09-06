@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -5,17 +6,12 @@ import 'package:my_app/screens/subscription_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // --- نماذج البيانات ---
-
 class Lecture {
   final String title;
-  final String youtubeUrl;
-  Lecture({required this.title, required this.youtubeUrl});
-
+  final String videoId;
+  Lecture({required this.title, required this.videoId});
   factory Lecture.fromMap(Map<String, dynamic> data) {
-    return Lecture(
-      title: data['title'] ?? 'N/A',
-      youtubeUrl: data['youtubeUrl'] ?? '',
-    );
+    return Lecture(title: data['title'] ?? 'N/A', videoId: data['videoId'] ?? '');
   }
 }
 
@@ -25,15 +21,7 @@ class LearningSection {
   final IconData icon;
   final List<Lecture> lectures;
   final bool isVip;
-
-  LearningSection({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.lectures,
-    this.isVip = false,
-  });
-
+  LearningSection({required this.title, required this.subtitle, required this.icon, required this.lectures, this.isVip = false});
   factory LearningSection.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data() as Map<String, dynamic>;
     IconData _getIconFromString(String iconName) {
@@ -47,9 +35,7 @@ class LearningSection {
       }
     }
     var lecturesData = data['lectures'] as List<dynamic>? ?? [];
-    List<Lecture> lecturesList =
-        lecturesData.map((lecture) => Lecture.fromMap(lecture)).toList();
-
+    List<Lecture> lecturesList = lecturesData.map((lecture) => Lecture.fromMap(lecture)).toList();
     return LearningSection(
       title: data['title'] ?? 'N/A',
       subtitle: data['subtitle'] ?? '',
@@ -64,16 +50,12 @@ class Question {
   final String text;
   final List<String> options;
   final int correctAnswerIndex;
-
   Question({required this.text, required this.options, required this.correctAnswerIndex});
 }
 
-
 // --- واجهة الصفحة ---
-
 class LearningPage extends StatefulWidget {
   const LearningPage({super.key});
-
   @override
   State<LearningPage> createState() => _LearningPageState();
 }
@@ -95,30 +77,15 @@ class _LearningPageState extends State<LearningPage> {
   }
   
   void _loadAllQuestions() {
-    // يمكنك لاحقًا جلب هذه الأسئلة من Firestore
     _allQuestions = [
-      Question(
-        text: 'ما هو أفضل وصف لنمط "المطرقة" (Hammer) في الشموع اليابانية؟',
-        options: ['شمعة هبوطية قوية', 'شمعة صعودية ذات فتيل سفلي طويل', 'شمعة بدون فتائل', 'نمط استمراري'],
-        correctAnswerIndex: 1,
-      ),
-      Question(
-        text: 'أي من المؤشرات التالية يقيس "زخم" السوق؟',
-        options: ['المتوسط المتحرك (Moving Average)', 'بولينجر باندز (Bollinger Bands)', 'مؤشر القوة النسبية (RSI)', 'مستويات فيبوناتشي'],
-        correctAnswerIndex: 2,
-      ),
-       Question(
-        text: 'ماذا يمثل "الدعم" (Support) في التحليل الفني؟',
-        options: ['مستوى سعر من المرجح أن يرتد منه السعر لأعلى', 'مستوى سعر من المرجح أن يرتد منه السعر لأسفل', 'أعلى سعر وصل له الأصل', 'أقل سعر وصل له الأصل'],
-        correctAnswerIndex: 0,
-      ),
-      // --- أضف المزيد من الأسئلة هنا ---
-       Question(text: 'سؤال 4', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 0),
-       Question(text: 'سؤال 5', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 1),
-       Question(text: 'سؤال 6', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 2),
-       Question(text: 'سؤال 7', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 3),
+      Question(text: 'ما هو أفضل وصف لنمط "المطرقة" (Hammer) في الشموع اليابانية؟', options: ['شمعة هبوطية قوية', 'شمعة صعودية ذات فتيل سفلي طويل', 'شمعة بدون فتائل', 'نمط استمراري'], correctAnswerIndex: 1),
+      Question(text: 'أي من المؤشرات التالية يقيس "زخم" السوق؟', options: ['المتوسط المتحرك (Moving Average)', 'بولينجر باندز (Bollinger Bands)', 'مؤشر القوة النسبية (RSI)', 'مستويات فيبوناتشي'], correctAnswerIndex: 2),
+      Question(text: 'ماذا يمثل "الدعم" (Support) في التحليل الفني؟', options: ['مستوى سعر من المرجح أن يرتد منه السعر لأعلى', 'مستوى سعر من المرجح أن يرتد منه السعر لأسفل', 'أعلى سعر وصل له الأصل', 'أقل سعر وصل له الأصل'], correctAnswerIndex: 0),
+      Question(text: 'سؤال 4', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 0),
+      Question(text: 'سؤال 5', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 1),
+      Question(text: 'سؤال 6', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 2),
+      Question(text: 'سؤال 7', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 3),
     ];
-    // عرض أول 3 أسئلة
     _displayedQuestions = _allQuestions.take(3).toList();
   }
 
@@ -130,10 +97,12 @@ class _LearningPageState extends State<LearningPage> {
 
   void _loadMoreQuestions() {
     if (_displayedQuestions.length < _allQuestions.length) {
-      setState(() {
-        int nextIndex = _displayedQuestions.length;
-        _displayedQuestions.add(_allQuestions[nextIndex]);
-      });
+      if(mounted) {
+        setState(() {
+          int nextIndex = _displayedQuestions.length;
+          _displayedQuestions.add(_allQuestions[nextIndex]);
+        });
+      }
     }
   }
 
@@ -144,9 +113,17 @@ class _LearningPageState extends State<LearningPage> {
         _correctAnswersCount++;
       }
     });
-    setState(() {
-      _showResults = true;
-    });
+    if(mounted) {
+      setState(() { _showResults = true; });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('لقد أجبت بشكل صحيح على $_correctAnswersCount من ${_allQuestions.length}!', style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.teal,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
   }
 
   void _retakeQuiz() {
@@ -164,11 +141,10 @@ class _LearningPageState extends State<LearningPage> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, // عدد التبويبات
+      length: 2,
       child: Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
@@ -176,7 +152,7 @@ class _LearningPageState extends State<LearningPage> {
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          bottom: TabBar(
+          bottom: const TabBar(
             labelColor: Colors.tealAccent,
             unselectedLabelColor: Colors.white70,
             indicatorColor: Colors.tealAccent,
@@ -193,9 +169,7 @@ class _LearningPageState extends State<LearningPage> {
           ),
           child: TabBarView(
             children: [
-              // --- محتوى تبويب المحاضرات ---
-              LecturesView(),
-              // --- محتوى تبويب الاختبار ---
+              const LecturesView(),
               _buildQuizView(),
             ],
           ),
@@ -204,7 +178,6 @@ class _LearningPageState extends State<LearningPage> {
     );
   }
 
-  // ويدجت لبناء واجهة الاختبار
   Widget _buildQuizView() {
     return ListView(
       controller: _scrollController,
@@ -219,15 +192,14 @@ class _LearningPageState extends State<LearningPage> {
             padding: const EdgeInsets.only(top: 30.0),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, padding: const EdgeInsets.symmetric(vertical: 16)),
-              onPressed: _submitQuiz,
-              child: const Text('اختبر نتيجتك', style: TextStyle(color: Colors.white, fontSize: 18)),
+              onPressed: _userAnswers.length == _allQuestions.length ? _submitQuiz : null,
+              child: const Text('عرض النتيجة', style: TextStyle(color: Colors.white, fontSize: 18)),
             ),
           ),
       ],
     );
   }
 
-  // ويدجت لعرض رأس النتيجة
   Widget _buildResultHeader() {
     return Card(
       color: Colors.black.withOpacity(0.3),
@@ -236,10 +208,7 @@ class _LearningPageState extends State<LearningPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text(
-              'نتيجتك: $_correctAnswersCount / ${_allQuestions.length}',
-              style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-            ),
+            Text('نتيجتك: $_correctAnswersCount / ${_allQuestions.length}', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _retakeQuiz,
@@ -251,57 +220,64 @@ class _LearningPageState extends State<LearningPage> {
     );
   }
 
-  // ويدجت لبناء بطاقة السؤال
   Widget _buildQuestionCard(Question question, int questionIndex) {
-    return Card(
-      color: Colors.black.withOpacity(0.25),
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'السؤال ${questionIndex + 1}: ${question.text}',
-              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20.0),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20.0),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
             ),
-            const SizedBox(height: 16),
-            ...List.generate(question.options.length, (optionIndex) {
-              bool isSelected = _userAnswers[questionIndex] == optionIndex;
-              bool isCorrect = question.correctAnswerIndex == optionIndex;
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('السؤال ${questionIndex + 1}: ${question.text}', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                ...List.generate(question.options.length, (optionIndex) {
+                  bool isSelected = _userAnswers[questionIndex] == optionIndex;
+                  bool isCorrect = question.correctAnswerIndex == optionIndex;
+                  Color borderColor = Colors.transparent;
+                  Color tileColor = Colors.black.withOpacity(0.2);
+                  Icon? trailingIcon;
 
-              Color? tileColor;
-              Icon? trailingIcon;
+                  if (_showResults) {
+                    if (isCorrect) {
+                      tileColor = Colors.green.withOpacity(0.3);
+                      trailingIcon = const Icon(Icons.check_circle, color: Colors.greenAccent);
+                    } else if (isSelected && !isCorrect) {
+                      tileColor = Colors.red.withOpacity(0.3);
+                      trailingIcon = const Icon(Icons.cancel, color: Colors.redAccent);
+                    }
+                  } else if (isSelected) {
+                    borderColor = Colors.tealAccent;
+                  }
 
-              if (_showResults) {
-                if (isCorrect) {
-                  tileColor = Colors.green.withOpacity(0.3);
-                  trailingIcon = const Icon(Icons.check, color: Colors.green);
-                } else if (isSelected && !isCorrect) {
-                  tileColor = Colors.red.withOpacity(0.3);
-                  trailingIcon = const Icon(Icons.close, color: Colors.red);
-                }
-              }
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  color: tileColor,
-                  borderRadius: BorderRadius.circular(10),
-                  border: isSelected && !_showResults ? Border.all(color: Colors.tealAccent, width: 2) : null,
-                ),
-                child: ListTile(
-                  title: Text(question.options[optionIndex], style: const TextStyle(color: Colors.white)),
-                  onTap: _showResults ? null : () {
-                    setState(() {
-                      _userAnswers[questionIndex] = optionIndex;
-                    });
-                  },
-                  trailing: trailingIcon,
-                ),
-              );
-            }),
-          ],
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: tileColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: borderColor, width: 2),
+                    ),
+                    child: ListTile(
+                      title: Text(question.options[optionIndex], style: const TextStyle(color: Colors.white)),
+                      onTap: _showResults ? null : () {
+                        setState(() { _userAnswers[questionIndex] = optionIndex; });
+                      },
+                      trailing: trailingIcon,
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -309,14 +285,13 @@ class _LearningPageState extends State<LearningPage> {
 }
 
 // --- ويدجت المحاضرات (تم فصلها لتنظيم الكود) ---
-
 class LecturesView extends StatelessWidget {
   const LecturesView({super.key});
 
-  Future<void> _launchURL(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri)) {
-      throw 'Could not launch $url';
+  Future<void> _launchURL(String videoId) async {
+    final Uri uri = Uri.parse('https://www.youtube.com/watch?v=$videoId');
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw 'Could not launch $uri';
     }
   }
 
@@ -325,19 +300,13 @@ class LecturesView extends StatelessWidget {
     return FutureBuilder<bool>(
       future: _fetchUserVipStatus(),
       builder: (context, userSnapshot) {
-        if (userSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        if (userSnapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
         final bool isUserVip = userSnapshot.data ?? false;
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance.collection('learning_sections').orderBy('timestamp').snapshots(),
           builder: (context, sectionsSnapshot) {
-            if (sectionsSnapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (!sectionsSnapshot.hasData) {
-              return const Center(child: Text('لا يوجد محتوى', style: TextStyle(color: Colors.white)));
-            }
+            if (sectionsSnapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+            if (!sectionsSnapshot.hasData) return const Center(child: Text('لا يوجد محتوى', style: TextStyle(color: Colors.white)));
             final sections = sectionsSnapshot.data!.docs.map((doc) => LearningSection.fromFirestore(doc)).toList();
             return ListView(
               padding: const EdgeInsets.only(top: 150, left: 16, right: 16, bottom: 20),
@@ -410,10 +379,11 @@ class LecturesView extends StatelessWidget {
         title: Text(section.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
         subtitle: Text(section.subtitle, style: const TextStyle(color: Colors.white70)),
         children: section.lectures.map((lecture) {
+          // --- تم التعديل هنا ---
           return ListTile(
-            leading: const Icon(Icons.play_circle_outline, color: Colors.tealAccent),
+            leading: const Icon(Icons.play_circle_fill, color: Colors.red), // أيقونة يوتيوب حمراء
             title: Text(lecture.title, style: const TextStyle(color: Colors.white)),
-            onTap: () => _launchURL(lecture.youtubeUrl),
+            onTap: () => _launchURL(lecture.videoId),
           );
         }).toList(),
       ),
