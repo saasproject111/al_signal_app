@@ -17,13 +17,21 @@ class _MainTabsPageState extends State<MainTabsPage> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
 
-  // قائمة الصفحات التي سيتم عرضها
   final List<Widget> _pages = <Widget>[
     const HomePage(),
-    const LearningPage(), // تم إرجاعها لـ const مؤقتًا
+    const LearningPage(),
     const RecommendationsPage(),
     const SettingsPage(),
     const ProfilePage(),
+  ];
+
+  // ألوان التبويبات
+  final List<Color> _tabColors = [
+    Colors.lightBlue,    // الرئيسية
+    Colors.green,        // التعلّم
+    Colors.amber,        // التوصيات
+    Colors.redAccent,    // الإعدادات
+    Colors.white,        // حسابي
   ];
 
   @override
@@ -51,8 +59,8 @@ class _MainTabsPageState extends State<MainTabsPage> {
           child: GNav(
             backgroundColor: Colors.blueGrey[900]!,
             color: Colors.white70,
-            activeColor: Colors.white,
-            tabBackgroundColor: Colors.grey.withOpacity(0.2),
+            activeColor: _tabColors[_selectedIndex],
+            tabBackgroundColor: _tabColors[_selectedIndex].withOpacity(0.25),
             gap: 8,
             padding: const EdgeInsets.all(12),
             selectedIndex: _selectedIndex,
@@ -62,13 +70,16 @@ class _MainTabsPageState extends State<MainTabsPage> {
                 duration: const Duration(milliseconds: 400),
                 curve: Curves.easeInOut,
               );
+              setState(() {
+                _selectedIndex = index;
+              });
             },
             tabs: const [
-              GButton(icon: Icons.home, text: 'الرئيسية'),
-              GButton(icon: Icons.school, text: 'التعلّم'),
-              GButton(icon: Icons.star, text: 'توصيات'),
-              GButton(icon: Icons.settings, text: 'الإعدادات'),
-              GButton(icon: Icons.person, text: 'ملفي'),
+              GButton(icon: Icons.dashboard_rounded, text: 'الرئيسية'),
+              GButton(icon: Icons.menu_book_rounded, text: 'التعلّم'),
+              GButton(icon: Icons.bar_chart_rounded, text: 'توصيات'),
+              GButton(icon: Icons.settings_rounded, text: 'الإعدادات'),
+              GButton(icon: Icons.account_circle_rounded, text: 'حسابي'),
             ],
           ),
         ),
