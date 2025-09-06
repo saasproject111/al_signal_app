@@ -20,7 +20,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _launchSupportChat() async {
-    final Uri url = Uri.parse('https://t.me/YourSupportUsername'); // !! استبدل بالرابط الصحيح !!
+    final Uri url = Uri.parse('https://t.me/m/FIrEmovvOTU0'); // !! استبدل بالرابط الصحيح !!
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
