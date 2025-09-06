@@ -13,7 +13,6 @@ class Recommendation {
   final String entryTime;
   final String? forecast;
   final String? payout;
-  final String? result;
   final bool isVip;
 
   const Recommendation({
@@ -23,7 +22,6 @@ class Recommendation {
     required this.entryTime,
     this.forecast,
     this.payout,
-    this.result,
     required this.isVip,
   });
 
@@ -37,7 +35,6 @@ class Recommendation {
       entryTime: data['entryTime'] ?? '--:--:--',
       forecast: data['forecast'],
       payout: data['payout'],
-      result: data['result'],
       isVip: data['isVip'] ?? false,
     );
   }
@@ -61,7 +58,6 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
 
   // دالة التحديث عند السحب
   Future<void> _handleRefresh() async {
-    // StreamBuilder يقوم بالتحديث تلقائيًا، لكن هذا يعطي تأكيدًا للمستخدم
     await Future.delayed(const Duration(seconds: 1));
   }
 
@@ -70,14 +66,18 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('التوصيات - SIGNAL', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('التوصيات - SIGNAL',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [Color(0xFF0A4F46), Colors.black], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+          gradient: LinearGradient(
+              colors: [Color(0xFF0A4F46), Colors.black],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter),
         ),
         child: FutureBuilder<bool>(
           future: _fetchUserVipStatus(),
@@ -93,31 +93,41 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     );
   }
 
-  // ويدجت بناء القائمة مع ميزة السحب للتحديث والقفل
+  // ويدجت بناء القائمة
   Widget _buildRecommendationsList(bool isUserVip) {
     return RefreshIndicator(
       onRefresh: _handleRefresh,
       backgroundColor: Colors.blueGrey[900],
       color: Colors.tealAccent,
       child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('recommendations').orderBy('timestamp', descending: true).limit(10).snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('recommendations')
+            .orderBy('timestamp', descending: true)
+            .limit(10)
+            .snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              snapshot.data == null) {
             return _buildShimmerLoadingList();
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return Stack(children: [
-              const Center(child: Text('لا توجد توصيات حاليًا', style: TextStyle(color: Colors.white))),
+              const Center(
+                  child: Text('لا توجد توصيات حاليًا',
+                      style: TextStyle(color: Colors.white))),
               if (!isUserVip) _buildVipLockOverlay(),
             ]);
           }
 
-          final recommendations = snapshot.data!.docs.map((doc) => Recommendation.fromFirestore(doc)).toList();
+          final recommendations = snapshot.data!.docs
+              .map((doc) => Recommendation.fromFirestore(doc))
+              .toList();
 
           return Stack(
             children: [
               ListView.builder(
-                padding: const EdgeInsets.only(top: 120, bottom: 20, left: 16, right: 16),
+                padding: const EdgeInsets.only(
+                    top: 120, bottom: 20, left: 16, right: 16),
                 itemCount: recommendations.length,
                 itemBuilder: (context, index) {
                   final rec = recommendations[index];
@@ -136,7 +146,8 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
 
   Widget _buildShimmerLoadingList() {
     return ListView(
-      padding: const EdgeInsets.only(top: 120, bottom: 20, left: 16, right: 16),
+      padding:
+          const EdgeInsets.only(top: 120, bottom: 20, left: 16, right: 16),
       children: List.generate(3, (index) => _buildShimmerCard()),
     );
   }
@@ -170,16 +181,34 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.lock_outline, color: Colors.yellow[700], size: 80),
+                  Icon(Icons.lock_outline,
+                      color: Colors.yellow[700], size: 80),
                   const SizedBox(height: 20),
-                  const Text('محتوى حصري للمشتركين', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  const Text('محتوى حصري للمشتركين',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  const Text('قم بالترقية لرؤية جميع التوصيات الفورية بوضوح.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const Text(
+                      'قم بالترقية لرؤية جميع التوصيات الفورية بوضوح.',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(color: Colors.white70, fontSize: 16)),
                   const SizedBox(height: 30),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow[700], padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SubscriptionPage())),
-                    child: const Text('الترقية الآن', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.yellow[700],
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 15)),
+                    onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const SubscriptionPage())),
+                    child: const Text('الترقية الآن',
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold)),
                   )
                 ],
               ),
@@ -192,14 +221,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
 
   Widget _buildRecommendationCard(Recommendation rec) {
     final bool isCall = rec.direction == 'call';
-    Color borderColor;
-    if (rec.result == 'win') {
-      borderColor = Colors.greenAccent;
-    } else if (rec.result == 'loss') {
-      borderColor = Colors.redAccent;
-    } else {
-      borderColor = Colors.white.withOpacity(0.2);
-    }
+    Color borderColor = Colors.white.withOpacity(0.2);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
@@ -209,21 +231,40 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
           filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           child: Container(
             decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.1),
+                      Colors.white.withOpacity(0.05)
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(25.0),
                 border: Border.all(color: borderColor, width: 1.5)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  Text(rec.pair.replaceAll('-', ' - '), style: TextStyle(color: Colors.yellow[600], fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text(rec.pair.replaceAll('-', ' - '),
+                      style: TextStyle(
+                          color: Colors.yellow[600],
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildDetailColumn('الاتجاه', isCall ? Icons.arrow_upward : Icons.arrow_downward, isCall ? Colors.greenAccent : Colors.redAccent),
-                      _buildDetailColumn('وقت الدخول', rec.entryTime, Colors.cyanAccent),
-                      _buildDetailColumn('المده', rec.timeframe, Colors.cyanAccent),
+                      _buildDetailColumn(
+                          'الاتجاه',
+                          isCall
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          isCall
+                              ? Colors.greenAccent
+                              : Colors.redAccent),
+                      _buildDetailColumn(
+                          'وقت الدخول', rec.entryTime, Colors.cyanAccent),
+                      _buildDetailColumn(
+                          'المده', rec.timeframe, Colors.cyanAccent),
                     ],
                   ),
                   if (rec.forecast != null || rec.payout != null) ...[
@@ -231,13 +272,18 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        if (rec.forecast != null) _buildExtraDetailRow(Icons.analytics_outlined, "Forecast: ${rec.forecast}%"),
-                        if (rec.payout != null) _buildExtraDetailRow(Icons.monetization_on_outlined, "Payout: ${rec.payout}%"),
+                        if (rec.forecast != null)
+                          _buildExtraDetailRow(
+                              Icons.analytics_outlined,
+                              "Forecast: ${rec.forecast}%"),
+                        if (rec.payout != null)
+                          _buildExtraDetailRow(
+                              Icons.monetization_on_outlined,
+                              "Payout: ${rec.payout}%"),
                       ],
                     ),
                   ],
-                  const Divider(color: Colors.white24, height: 24),
-                  _buildResultRow(rec.result),
+                  // ❌ تم حذف النتيجة (ربح/خسارة/انتظار)
                 ],
               ),
             ),
@@ -247,41 +293,25 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     );
   }
 
-  Widget _buildResultRow(String? result) {
-    if (result == null) {
-      return Shimmer.fromColors(
-          baseColor: Colors.grey[600]!,
-          highlightColor: Colors.grey[500]!,
-          child: const Text('في انتظار النتيجة...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)));
-    } else if (result == 'win') {
-      return const Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.check_circle, color: Colors.greenAccent),
-        SizedBox(width: 8),
-        Text('ربح', style: TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.bold)),
-      ]);
-    } else {
-      return const Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.cancel, color: Colors.redAccent),
-        SizedBox(width: 8),
-        Text('خسارة', style: TextStyle(color: Colors.redAccent, fontSize: 18, fontWeight: FontWeight.bold)),
-      ]);
-    }
-  }
-
   Widget _buildDetailColumn(String title, dynamic value, Color valueColor) {
     return Column(children: [
       Text(title, style: const TextStyle(color: Colors.white70, fontSize: 14)),
       const SizedBox(height: 8),
-      if (value is IconData) Icon(value, color: valueColor, size: 30) else Text(value.toString(), style: TextStyle(color: valueColor, fontSize: 20, fontWeight: FontWeight.bold)),
+      if (value is IconData)
+        Icon(value, color: valueColor, size: 30)
+      else
+        Text(value.toString(),
+            style: TextStyle(
+                color: valueColor, fontSize: 20, fontWeight: FontWeight.bold)),
     ]);
   }
-  
+
   Widget _buildExtraDetailRow(IconData icon, String text) {
     return Row(children: [
       Icon(icon, color: Colors.white60, size: 16),
       const SizedBox(width: 6),
-      Text(text, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+      Text(text,
+          style: const TextStyle(color: Colors.white70, fontSize: 14)),
     ]);
   }
 }
-
