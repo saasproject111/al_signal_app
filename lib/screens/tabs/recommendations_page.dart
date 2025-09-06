@@ -69,7 +69,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
         title: const Text('التوصيات - SIGNAL',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF0A4F46), // لون ثابت بدل الشفاف
         elevation: 0,
       ),
       body: Container(

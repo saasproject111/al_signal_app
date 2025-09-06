@@ -146,11 +146,10 @@ class _LearningPageState extends State<LearningPage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        extendBodyBehindAppBar: true,
         appBar: AppBar(
           title: const Text('التــــــعلم - LEARNING', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
           centerTitle: true,
-          backgroundColor: Colors.transparent,
+          backgroundColor: const Color(0xFF0A4F46), // خلفية ثابتة
           elevation: 0,
           bottom: const TabBar(
             labelColor: Colors.tealAccent,
@@ -181,7 +180,7 @@ class _LearningPageState extends State<LearningPage> {
   Widget _buildQuizView() {
     return ListView(
       controller: _scrollController,
-      padding: const EdgeInsets.only(top: 150, left: 16, right: 16, bottom: 100),
+      padding: const EdgeInsets.only(top: 50, left: 16, right: 16, bottom: 100),
       children: [
         if (_showResults) _buildResultHeader(),
         ...List.generate(_displayedQuestions.length, (index) {
@@ -309,7 +308,7 @@ class LecturesView extends StatelessWidget {
             if (!sectionsSnapshot.hasData) return const Center(child: Text('لا يوجد محتوى', style: TextStyle(color: Colors.white)));
             final sections = sectionsSnapshot.data!.docs.map((doc) => LearningSection.fromFirestore(doc)).toList();
             return ListView(
-              padding: const EdgeInsets.only(top: 150, left: 16, right: 16, bottom: 20),
+              padding: const EdgeInsets.only(top: 50, left: 16, right: 16, bottom: 20),
               children: [
                 _buildHeader(),
                 const SizedBox(height: 20),
@@ -332,6 +331,7 @@ class LecturesView extends StatelessWidget {
     return userDoc.data()?['isVip'] ?? false;
   }
   
+  // --- تمت إعادة إضافة هذه الدوال المفقودة ---
   Widget _buildHeader() {
     return Column(
       children: [
@@ -353,7 +353,7 @@ class LecturesView extends StatelessWidget {
     final iconColor = section.isVip ? Colors.yellow[700] : Colors.white;
     if (isLocked) {
       return Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        margin: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
         color: Colors.black.withOpacity(0.4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0), side: BorderSide(color: Colors.grey[800]!)),
         child: ListTile(
@@ -368,7 +368,7 @@ class LecturesView extends StatelessWidget {
       );
     }
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      margin: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
       color: cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0), side: section.isVip ? BorderSide(color: Colors.yellow[700]!, width: 1.5) : BorderSide.none),
       clipBehavior: Clip.antiAlias,
@@ -379,11 +379,11 @@ class LecturesView extends StatelessWidget {
         title: Text(section.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
         subtitle: Text(section.subtitle, style: const TextStyle(color: Colors.white70)),
         children: section.lectures.map((lecture) {
-          // --- تم التعديل هنا ---
           return ListTile(
-            leading: const Icon(Icons.play_circle_fill, color: Colors.red), // أيقونة يوتيوب حمراء
+            leading: const Icon(Icons.play_circle_fill, color: Colors.red, size: 30),
             title: Text(lecture.title, style: const TextStyle(color: Colors.white)),
             onTap: () => _launchURL(lecture.videoId),
+            contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24.0),
           );
         }).toList(),
       ),
