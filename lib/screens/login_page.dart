@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/services/auth_service.dart';
-import 'package:shimmer/shimmer.dart'; // 1. استيراد حزمة اللمعان
+import 'package:shimmer/shimmer.dart';
+import 'package:my_app/screens/terms_of_service_page.dart'; // ✅ استيراد صفحة الشروط
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,7 +17,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   late Animation<Offset> _contentAnimation;
   late Animation<double> _fadeAnimation;
 
-  bool _acceptedTerms = false; // ✅ متغير لموافقة المستخدم
+  bool _acceptedTerms = false;
 
   @override
   void initState() {
@@ -49,7 +50,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       parent: _controller,
       curve: const Interval(0.5, 1.0, curve: Curves.easeOut),
     ));
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
       parent: _controller,
       curve: const Interval(0.5, 1.0, curve: Curves.easeOut),
@@ -122,19 +123,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                         ),
                         GestureDetector(
                           onTap: () {
-                            // هنا تفتح صفحة الأحكام والشروط
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text("الأحكام والشروط"),
-                                content: const Text("هنا يتم عرض نص الشروط والأحكام..."),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text("موافق"),
-                                  )
-                                ],
-                              ),
+                            // ✅ فتح صفحة الأحكام والشروط
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const TermsOfServicePage()),
                             );
                           },
                           child: const Text(
