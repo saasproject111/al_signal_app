@@ -63,13 +63,13 @@ class _PremiumVipBannerState extends State<PremiumVipBanner>
             boxShadow: [
               BoxShadow(
                 color: widget.glowAnimation.value!.withOpacity(0.5),
-                blurRadius: 20,
-                spreadRadius: 3,
+                blurRadius: 12,
+                spreadRadius: 1.5,
               ),
               BoxShadow(
                 color: Colors.amber.withOpacity(0.3),
-                blurRadius: 30,
-                spreadRadius: 1,
+                blurRadius: 18,
+                spreadRadius: 0.5,
               ),
             ],
           ),

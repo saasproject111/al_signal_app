@@ -63,8 +63,7 @@ class EnhancedLearningPage extends StatefulWidget {
   State<EnhancedLearningPage> createState() => _EnhancedLearningPageState();
 }
 
-class _EnhancedLearningPageState extends State<EnhancedLearningPage>
-    with TickerProviderStateMixin {
+class _EnhancedLearningPageState extends State<EnhancedLearningPage> {
   // متغيرات لحالة الاختبار (نفس المنطق الأصلي)
   List<Question> _allQuestions = [];
   List<Question> _displayedQuestions = [];
@@ -72,55 +71,14 @@ class _EnhancedLearningPageState extends State<EnhancedLearningPage>
   bool _showResults = false;
   int _correctAnswersCount = 0;
   final ScrollController _scrollController = ScrollController();
-  
-  // متحكمات الأنيميشن الجديدة
-  late AnimationController _tabController;
-  late AnimationController _headerController;
-  late Animation<double> _headerAnimation;
-  late Animation<Offset> _tabSlideAnimation;
 
   @override
   void initState() {
     super.initState();
     _loadAllQuestions();
     _scrollController.addListener(_onScroll);
-    
-    // إعداد الأنيميشنات
-    _tabController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    
-    _headerController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-    
-    _headerAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _headerController,
-      curve: Curves.easeOutBack,
-    ));
-    
-    _tabSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, -1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _tabController,
-      curve: Curves.elasticOut,
-    ));
-    
-    // بدء الأنيميشنات
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        _headerController.forward();
-        _tabController.forward();
-      }
-    });
   }
-  
+
   void _loadAllQuestions() {
     // نفس الكود الأصلي للأسئلة
     _allQuestions = [
@@ -226,16 +184,16 @@ class _EnhancedLearningPageState extends State<EnhancedLearningPage>
                     height: 80,
                     decoration: BoxDecoration(
                       color: _correctAnswersCount >= _allQuestions.length * 0.7
-                        ? Colors.green
-                        : _correctAnswersCount >= _allQuestions.length * 0.5
+                          ? Colors.green
+                          : _correctAnswersCount >= _allQuestions.length * 0.5
                           ? Colors.orange
                           : Colors.red,
                       borderRadius: BorderRadius.circular(40),
                       boxShadow: [
                         BoxShadow(
                           color: (_correctAnswersCount >= _allQuestions.length * 0.7
-                            ? Colors.green
-                            : _correctAnswersCount >= _allQuestions.length * 0.5
+                              ? Colors.green
+                              : _correctAnswersCount >= _allQuestions.length * 0.5
                               ? Colors.orange
                               : Colors.red).withOpacity(0.5),
                           blurRadius: 20,
@@ -245,8 +203,8 @@ class _EnhancedLearningPageState extends State<EnhancedLearningPage>
                     ),
                     child: Icon(
                       _correctAnswersCount >= _allQuestions.length * 0.7
-                        ? Icons.emoji_events
-                        : _correctAnswersCount >= _allQuestions.length * 0.5
+                          ? Icons.emoji_events
+                          : _correctAnswersCount >= _allQuestions.length * 0.5
                           ? Icons.thumb_up
                           : Icons.refresh,
                       color: Colors.white,
@@ -275,8 +233,8 @@ class _EnhancedLearningPageState extends State<EnhancedLearningPage>
                   const SizedBox(height: 10),
                   Text(
                     _correctAnswersCount >= _allQuestions.length * 0.7
-                      ? 'ممتاز! أداء رائع 🎉'
-                      : _correctAnswersCount >= _allQuestions.length * 0.5
+                        ? 'ممتاز! أداء رائع 🎉'
+                        : _correctAnswersCount >= _allQuestions.length * 0.5
                         ? 'جيد! يمكنك التحسن 👍'
                         : 'تحتاج للمزيد من المراجعة 📚',
                     style: const TextStyle(
@@ -350,12 +308,10 @@ class _EnhancedLearningPageState extends State<EnhancedLearningPage>
       _displayedQuestions = _allQuestions.take(3).toList();
     });
   }
-  
+
   @override
   void dispose(){
     _scrollController.dispose();
-    _tabController.dispose();
-    _headerController.dispose();
     super.dispose();
   }
 
@@ -368,99 +324,88 @@ class _EnhancedLearningPageState extends State<EnhancedLearningPage>
           backgroundColor: Colors.transparent,
           appBar: PreferredSize(
             preferredSize: const Size.fromHeight(120),
-            child: AnimatedBuilder(
-              animation: _headerAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _headerAnimation.value,
-                  child: AppBar(
-                    title: ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Colors.tealAccent, Colors.cyanAccent, Colors.white],
-                      ).createShader(bounds),
-                      child: const Text(
-                        'التــــــعلم - LEARNING',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 22,
-                          color: Colors.white,
-                        ),
-                      ),
+            child: AppBar(
+              title: ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Colors.tealAccent, Colors.cyanAccent, Colors.white],
+                ).createShader(bounds),
+                child: const Text(
+                  'التــــــعلم - LEARNING',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              centerTitle: true,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.teal.withOpacity(0.3),
+                      Colors.cyan.withOpacity(0.2),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(50),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
                     ),
-                    centerTitle: true,
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    flexibleSpace: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.teal.withOpacity(0.3),
-                            Colors.cyan.withOpacity(0.2),
-                            Colors.transparent,
+                  ),
+                  child: TabBar(
+                    labelColor: Colors.tealAccent,
+                    unselectedLabelColor: Colors.white70,
+                    indicator: BoxDecoration(
+                      color: Colors.teal.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.tealAccent.withOpacity(0.3),
+                          blurRadius: 15,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    tabs: const [
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.play_circle_filled, size: 20),
+                            SizedBox(width: 8),
+                            Text('المحاضرات', style: TextStyle(fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
-                    ),
-                    bottom: PreferredSize(
-                      preferredSize: const Size.fromHeight(50),
-                      child: SlideTransition(
-                        position: _tabSlideAnimation,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                            ),
-                          ),
-                          child: TabBar(
-                            labelColor: Colors.tealAccent,
-                            unselectedLabelColor: Colors.white70,
-                            indicator: BoxDecoration(
-                              color: Colors.teal.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(25),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.tealAccent.withOpacity(0.3),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            indicatorSize: TabBarIndicatorSize.tab,
-                            dividerColor: Colors.transparent,
-                            tabs: const [
-                              Tab(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.play_circle_filled, size: 20),
-                                    SizedBox(width: 8),
-                                    Text('المحاضرات', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                              Tab(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.quiz, size: 20),
-                                    SizedBox(width: 8),
-                                    Text('الاختبار', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.quiz, size: 20),
+                            SizedBox(width: 8),
+                            Text('الاختبار', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ],
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ),
           body: TabBarView(
@@ -615,30 +560,7 @@ class EnhancedLecturesView extends StatefulWidget {
   State<EnhancedLecturesView> createState() => _EnhancedLecturesViewState();
 }
 
-class _EnhancedLecturesViewState extends State<EnhancedLecturesView>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-    
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        _animationController.forward();
-      }
-    });
-  }
-  
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+class _EnhancedLecturesViewState extends State<EnhancedLecturesView> {
 
   Future<void> _launchURL(String videoId) async {
     final Uri uri = Uri.parse('https://www.youtube.com/watch?v=$videoId');
@@ -696,7 +618,7 @@ class _EnhancedLecturesViewState extends State<EnhancedLecturesView>
       },
     );
   }
-  
+
   Future<bool> _fetchUserVipStatus() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return false;
@@ -704,142 +626,120 @@ class _EnhancedLecturesViewState extends State<EnhancedLecturesView>
     if (!userDoc.exists) return false;
     return userDoc.data()?['isVip'] ?? false;
   }
-  
+
   Widget _buildEnhancedHeader() {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, 50 * (1 - _animationController.value)),
-          child: Opacity(
-            opacity: _animationController.value,
-            child: PremiumCard(
-              backgroundColor: Colors.teal.withOpacity(0.2),
-              borderColor: Colors.tealAccent.withOpacity(0.5),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    // أيقونة التعلم المتوهجة
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Colors.tealAccent, Colors.cyan],
-                        ),
-                        borderRadius: BorderRadius.circular(50),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.tealAccent.withOpacity(0.5),
-                            blurRadius: 30,
-                            spreadRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.school,
-                        size: 50,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // العنوان الرئيسي
-                    ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Colors.white, Colors.tealAccent, Colors.cyan],
-                      ).createShader(bounds),
-                      child: const Text(
-                        'خطوتك الأولى في عالم التداول',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '"بيناري - فوركس"',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.tealAccent,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.orange.withOpacity(0.3),
-                            Colors.red.withOpacity(0.2),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(25),
-                        border: Border.all(
-                          color: Colors.orange.withOpacity(0.5),
-                        ),
-                      ),
-                      child: const Text(
-                        'هذا الكورس كفيل يحولك من مبتدأ الى محترف في اقل من شهر',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
+    return PremiumCard(
+      backgroundColor: Colors.teal.withOpacity(0.2),
+      borderColor: Colors.tealAccent.withOpacity(0.5),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            // أيقونة التعلم المتوهجة
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Colors.tealAccent, Colors.cyan],
+                ),
+                borderRadius: BorderRadius.circular(50),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.tealAccent.withOpacity(0.5),
+                    blurRadius: 30,
+                    spreadRadius: 10,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.school,
+                size: 50,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 20),
+            // العنوان الرئيسي
+            ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [Colors.white, Colors.tealAccent, Colors.cyan],
+              ).createShader(bounds),
+              child: const Text(
+                'خطوتك الأولى في عالم التداول',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  height: 1.3,
                 ),
               ),
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 8),
+            const Text(
+              '"بيناري - فوركس"',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.tealAccent,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.orange.withOpacity(0.3),
+                    Colors.red.withOpacity(0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(
+                  color: Colors.orange.withOpacity(0.5),
+                ),
+              ),
+              child: const Text(
+                'هذا الكورس كفيل يحولك من مبتدأ الى محترف في اقل من شهر',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildEnhancedSectionCard(BuildContext context, LearningSection section, bool isUserVip, int index) {
     final bool isLocked = section.isVip && !isUserVip;
-    
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, 30 * (1 - _animationController.value)),
-          child: Opacity(
-            opacity: _animationController.value,
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: PremiumCard(
-                isVip: section.isVip,
-                backgroundColor: isLocked 
-                  ? Colors.grey.withOpacity(0.2)
-                  : section.isVip 
-                    ? Colors.amber.withOpacity(0.1)
-                    : Colors.white.withOpacity(0.1),
-                borderColor: isLocked
-                  ? Colors.grey.withOpacity(0.5)
-                  : section.isVip
-                    ? Colors.yellow.withOpacity(0.7)
-                    : Colors.teal.withOpacity(0.5),
-                onTap: isLocked 
-                  ? () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const SubscriptionPage())
-                    )
-                  : null,
-                child: isLocked ? _buildLockedSection(section) : _buildUnlockedSection(section),
-              ),
-            ),
-          ),
-        );
-      },
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: PremiumCard(
+        isVip: section.isVip,
+        backgroundColor: isLocked
+            ? Colors.grey.withOpacity(0.2)
+            : section.isVip
+            ? Colors.amber.withOpacity(0.1)
+            : Colors.white.withOpacity(0.1),
+        borderColor: isLocked
+            ? Colors.grey.withOpacity(0.5)
+            : section.isVip
+            ? Colors.yellow.withOpacity(0.7)
+            : Colors.teal.withOpacity(0.5),
+        onTap: isLocked
+            ? () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const SubscriptionPage())
+        )
+            : null,
+        child: isLocked ? _buildLockedSection(section) : _buildUnlockedSection(section),
+      ),
     );
   }
 
@@ -929,9 +829,9 @@ class _EnhancedLecturesViewState extends State<EnhancedLecturesView>
           height: 50,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: section.isVip 
-                ? [Colors.yellow, Colors.orange]
-                : [Colors.teal, Colors.cyan],
+              colors: section.isVip
+                  ? [Colors.yellow, Colors.orange]
+                  : [Colors.teal, Colors.cyan],
             ),
             borderRadius: BorderRadius.circular(25),
             boxShadow: [
