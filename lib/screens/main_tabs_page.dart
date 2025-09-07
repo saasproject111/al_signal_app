@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import 'package:my_app/screens/tabs/home_page.dart';
+import 'package:my_app/screens/tabs/premium_home_page.dart';
 import 'package:my_app/screens/tabs/learning_page.dart';
 import 'package:my_app/screens/tabs/profile_page.dart';
 import 'package:my_app/screens/tabs/recommendations_page.dart';
@@ -18,7 +18,7 @@ class _MainTabsPageState extends State<MainTabsPage> {
   final PageController _pageController = PageController();
 
   final List<Widget> _pages = <Widget>[
-    const HomePage(),
+    const PremiumHomePage(),   // ✅ تعديل هنا
     const LearningPage(),
     const RecommendationsPage(),
     const SettingsPage(),
