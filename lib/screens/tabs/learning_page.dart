@@ -76,18 +76,44 @@ class _LearningPageState extends State<LearningPage> {
     _scrollController.addListener(_onScroll);
   }
   
-  void _loadAllQuestions() {
+    void _loadAllQuestions() {
     _allQuestions = [
       Question(text: 'ما هو أفضل وصف لنمط "المطرقة" (Hammer) في الشموع اليابانية؟', options: ['شمعة هبوطية قوية', 'شمعة صعودية ذات فتيل سفلي طويل', 'شمعة بدون فتائل', 'نمط استمراري'], correctAnswerIndex: 1),
       Question(text: 'أي من المؤشرات التالية يقيس "زخم" السوق؟', options: ['المتوسط المتحرك (Moving Average)', 'بولينجر باندز (Bollinger Bands)', 'مؤشر القوة النسبية (RSI)', 'مستويات فيبوناتشي'], correctAnswerIndex: 2),
       Question(text: 'ماذا يمثل "الدعم" (Support) في التحليل الفني؟', options: ['مستوى سعر من المرجح أن يرتد منه السعر لأعلى', 'مستوى سعر من المرجح أن يرتد منه السعر لأسفل', 'أعلى سعر وصل له الأصل', 'أقل سعر وصل له الأصل'], correctAnswerIndex: 0),
-      Question(text: 'سؤال 4', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 0),
-      Question(text: 'سؤال 5', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 1),
-      Question(text: 'سؤال 6', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 2),
-      Question(text: 'سؤال 7', options: ['أ', 'ب', 'ج', 'د'], correctAnswerIndex: 3),
+      // --------------------- أسئلة جديدة ---------------------
+      Question(text: 'ما معنى مصطلح الفوركس (Forex)؟', options: ['تداول العملات الأجنبية', 'الأسهم الأمريكية', 'المشتقات المالية', 'السلع فقط'], correctAnswerIndex: 0),
+      Question(text: 'ما هو حجم العقد القياسي (Standard Lot) في الفوركس؟', options: ['100 وحدة', '1000 وحدة', '10000 وحدة', '100000 وحدة'], correctAnswerIndex: 3),
+      Question(text: 'ما هي الرافعة المالية (Leverage)؟', options: ['أداة للتحليل الفني', 'إمكانية التداول برأس مال أكبر من الرصيد الفعلي', 'نوع من المؤشرات', 'طريقة لإدارة رأس المال'], correctAnswerIndex: 1),
+      Question(text: 'ماذا يعني مصطلح "Margin Call"؟', options: ['ربح إضافي', 'طلب إيداع أموال إضافية بسبب الخسارة', 'إغلاق الصفقة تلقائياً عند الربح', 'رسوم التداول'], correctAnswerIndex: 1),
+      Question(text: 'أي من هذه الشموع تعكس هبوطاً محتملاً؟', options: ['شمعة دوجي', 'شمعة الرجل المشنوق (Hanging Man)', 'شمعة المطرقة', 'شمعة بيضاء طويلة'], correctAnswerIndex: 1),
+      Question(text: 'ما هي وظيفة مؤشر البولنجر باندز (Bollinger Bands)؟', options: ['قياس حجم السوق', 'تحديد مناطق التشبع الشرائي والبيعي', 'إظهار الترند فقط', 'حساب الفوليوم'], correctAnswerIndex: 1),
+      Question(text: 'في التداول الثنائي (Binary Options)، ما أقصى خسارة ممكنة في صفقة؟', options: ['10%', '50%', '100%', 'لا يوجد خسارة'], correctAnswerIndex: 2),
+      Question(text: 'ما الفرق الأساسي بين الفوركس والخيارات الثنائية؟', options: ['الفوركس أكثر خطورة', 'البيناري له وقت انتهاء محدد بينما الفوركس لا', 'البيناري بدون رأس مال', 'لا يوجد فرق'], correctAnswerIndex: 1),
+      Question(text: 'ما هو "Take Profit"؟', options: ['أمر لإغلاق الصفقة عند خسارة معينة', 'أمر لإغلاق الصفقة عند ربح محدد مسبقاً', 'زيادة حجم العقد', 'أداة للتحليل'], correctAnswerIndex: 1),
+      Question(text: 'أي من الأزواج التالية يعتبر من العملات الرئيسية (Major Pairs)؟', options: ['USD/JPY', 'USD/EGP', 'GBP/ZAR', 'AUD/MXN'], correctAnswerIndex: 0),
+      Question(text: 'ما معنى مصطلح "Pip" في الفوركس؟', options: ['وحدة قياس أصغر تغير في السعر', 'نوع من المؤشرات', 'سعر الإغلاق', 'اسم شمعة'], correctAnswerIndex: 0),
+      Question(text: 'ماذا يمثل "المقاومة" (Resistance)؟', options: ['منطقة يتوقع أن يرتد السعر منها لأسفل', 'أعلى سعر في اليوم', 'مستوى وقف الخسارة', 'متوسط السعر'], correctAnswerIndex: 0),
+      Question(text: 'ما هو التحليل الأساسي؟', options: ['الاعتماد على الأخبار والاقتصاد', 'الاعتماد على الرسم البياني', 'استخدام الشموع فقط', 'استخدام خطوط الترند فقط'], correctAnswerIndex: 0),
+      Question(text: 'في إدارة رأس المال، ما النسبة المثالية للمخاطرة في الصفقة الواحدة؟', options: ['1-2% من رأس المال', '10% من رأس المال', '50% من رأس المال', '100% من رأس المال'], correctAnswerIndex: 0),
+      Question(text: 'ماذا يعني مصطلح "Overbought"؟', options: ['تشبع بيعي', 'تشبع شرائي', 'اتجاه صاعد قوي', 'سوق هابط'], correctAnswerIndex: 1),
+      Question(text: 'أي إطار زمني يستخدم عادة للتداول السريع (Scalping)؟', options: ['شهري', 'يومي', 'خمس دقائق', 'أسبوعي'], correctAnswerIndex: 2),
+      Question(text: 'ما وظيفة مؤشر الموفنج أفريج (Moving Average)؟', options: ['تحديد الاتجاه العام', 'قياس التشبع الشرائي', 'توقع الأخبار', 'إظهار مستويات الدعم'], correctAnswerIndex: 0),
+      Question(text: 'ماذا يحدث إذا ارتفع الدولار أمام اليورو؟', options: ['زوج EUR/USD يهبط', 'زوج EUR/USD يصعد', 'لا يتأثر الزوج', 'يرتفع معاً'], correctAnswerIndex: 0),
+      Question(text: 'أي نوع من الأوامر يغلق الصفقة تلقائياً عند خسارة محددة؟', options: ['Take Profit', 'Stop Loss', 'Buy Limit', 'Sell Stop'], correctAnswerIndex: 1),
+      Question(text: 'ما معنى مصطلح Hedging؟', options: ['فتح صفقة عكسية لحماية الصفقة الأصلية', 'مضاعفة حجم العقد', 'زيادة الرافعة', 'التحليل الأساسي'], correctAnswerIndex: 0),
+      Question(text: 'أي من هذه الاستراتيجيات تعتبر آمنة نسبياً؟', options: ['Martingale', 'إدارة رأس المال 2%', 'All-in', 'زيادة المخاطرة'], correctAnswerIndex: 1),
+      Question(text: 'ما هو الفوليوم (Volume)؟', options: ['عدد الصفقات المنفذة', 'قيمة الربح', 'مستوى الدعم', 'الموفنج أفريج'], correctAnswerIndex: 0),
+      Question(text: 'أي الشموع التالية تدل على الحيرة في السوق؟', options: ['Doji', 'Hammer', 'Engulfing', 'Marubozu'], correctAnswerIndex: 0),
+      Question(text: 'ما هي ميزة حساب تجريبي (Demo Account)؟', options: ['التداول بدون أموال حقيقية', 'ربح مضمون', 'لا خسارة', 'أرباح أكبر'], correctAnswerIndex: 0),
+      Question(text: 'ما هو السبريد (Spread)؟', options: ['الفرق بين سعر البيع والشراء', 'الرافعة المالية', 'وقف الخسارة', 'نوع شمعة'], correctAnswerIndex: 0),
+      Question(text: 'أي الأزواج التالية يسمى بالـ "Cable"؟', options: ['GBP/USD', 'EUR/USD', 'USD/JPY', 'USD/CAD'], correctAnswerIndex: 0),
+      Question(text: 'ما معنى مصطلح Liquidity؟', options: ['السيولة في السوق', 'نوع من العقود', 'وقف الخسارة', 'التذبذب'], correctAnswerIndex: 0),
+      Question(text: 'في البيناري أوبشن، إذا توقعت أن السعر سيهبط تختار؟', options: ['Call', 'Put', 'Hold', 'Stop'], correctAnswerIndex: 1),
     ];
     _displayedQuestions = _allQuestions.take(3).toList();
   }
+
 
   void _onScroll() {
     if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {

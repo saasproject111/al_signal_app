@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:my_app/widgets/payment_methods_sheet.dart';
-
-enum SubscriptionPlan { monthly, yearly }
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../widgets/payment_methods_sheet.dart';
+import '../widgets/animated_gradient_background.dart';
+import '../widgets/premium_plan_card.dart';
+import '../widgets/billing_toggle_widget.dart';
+import '../models/subscription_plan.dart';
+import '../utils/app_colors.dart';
 
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
@@ -10,22 +15,55 @@ class SubscriptionPage extends StatefulWidget {
   State<SubscriptionPage> createState() => _SubscriptionPageState();
 }
 
-class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerProviderStateMixin {
+class _SubscriptionPageState extends State<SubscriptionPage>
+    with TickerProviderStateMixin {
   bool _isYearly = false;
-  late AnimationController _controller;
-  late List<Animation<double>> _animations;
+  late AnimationController _headerController;
+  late AnimationController _cardsController;
+  late List<Animation<double>> _cardAnimations;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
-    _animations = List.generate(3, (index) => Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Interval(0.2 * index, 0.6 + 0.2 * index, curve: Curves.easeOutCubic))));
-    _controller.forward();
+    _setupAnimations();
+  }
+
+  void _setupAnimations() {
+    _headerController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    
+    _cardsController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    final plans = SubscriptionPlan.getPlans();
+    _cardAnimations = List.generate(
+      plans.length,
+      (index) => Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+          parent: _cardsController,
+          curve: Interval(
+            0.2 * index,
+            0.6 + 0.2 * index,
+            curve: Curves.elasticOut,
+          ),
+        ),
+      ),
+    );
+
+    _headerController.forward();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _cardsController.forward();
+    });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _headerController.dispose();
+    _cardsController.dispose();
     super.dispose();
   }
 
@@ -33,180 +71,256 @@ class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerPr
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
+      appBar: _buildAppBar(),
+      body: AnimatedGradientBackground(
+        child: _buildBody(),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: Container(
+        margin: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.2)),
+        ),
+        child: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [Color(0xFF0A4F46), Colors.black], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
-          child: SafeArea(
-            child: Column(
-              children: [
-                const Text('اختر خطتك', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                const Text('احصل على وصول غير محدود لكل الميزات', style: TextStyle(color: Colors.white70, fontSize: 16)),
-                const SizedBox(height: 30),
-                _buildBillingToggle(),
-                const SizedBox(height: 30),
-                _buildAnimatedPlanCard(
-                  animation: _animations[0],
-                  title: 'مجانية',
-                  price: '0\$',
-                  period: 'للأبد',
-                  features: ['الوصول للمحتوى التعليمي الأساسي', 'توصيات مجانية محدودة'],
-                  borderColor: Colors.grey,
-                  isFree: true,
-                ),
-                const SizedBox(height: 20),
-                _buildAnimatedPlanCard(
-                  animation: _animations[1],
-                  title: 'بلاتينيوم',
-                  monthlyPrice: '9.99\$',
-                  yearlyPrice: '59.99\$',
-                  features: ['كل مميزات الخطة المجانية', 'جميع التوصيات الفورية', 'استراتيجيات التداول الحصرية', 'إشعارات VIP'],
-                  borderColor: Colors.lightBlue[300]!,
-                ),
-                const SizedBox(height: 20),
-                _buildAnimatedPlanCard(
-                  animation: _animations[2],
-                  title: 'ذهبية',
-                  monthlyPrice: '19.99\$',
-                  yearlyPrice: '119.99\$',
-                  features: ['كل مميزات البلاتينيوم', 'جلسات تحليل أسبوعية', 'دعم فني مباشر', 'مؤشرات خاصة'],
-                  borderColor: Colors.yellow[700]!,
-                  isRecommended: true,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildBillingToggle() {
-    return GestureDetector(
-      onTap: () { setState(() { _isYearly = !_isYearly; }); },
-      child: Container(
-        height: 50,
-        decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), borderRadius: BorderRadius.circular(25)),
-        child: Stack(
-          children: [
-            AnimatedAlign(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              alignment: _isYearly ? Alignment.centerRight : Alignment.centerLeft,
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.4,
-                margin: const EdgeInsets.all(4),
-                decoration: BoxDecoration(color: Colors.teal, borderRadius: BorderRadius.circular(25)),
-              ),
-            ),
-            Row(
-              children: [
-                Expanded(child: Center(child: Text('شهري', style: TextStyle(color: _isYearly ? Colors.white70 : Colors.white, fontWeight: FontWeight.bold)))),
-                Expanded(child: Center(child: Text('سنوي', style: TextStyle(color: _isYearly ? Colors.white : Colors.white70, fontWeight: FontWeight.bold)))),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAnimatedPlanCard({
-    required Animation<double> animation,
-    required String title,
-    String? price,
-    String? period,
-    String? monthlyPrice,
-    String? yearlyPrice,
-    required List<String> features,
-    required Color borderColor,
-    bool isRecommended = false,
-    bool isFree = false,
-  }) {
-    return FadeTransition(
-      opacity: animation,
-      child: SlideTransition(
-        position: Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(animation),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.25),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: borderColor, width: 2),
-            boxShadow: [BoxShadow(color: borderColor.withOpacity(0.2), blurRadius: 10, spreadRadius: 2)],
-          ),
+  Widget _buildBody() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (isRecommended)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: borderColor, borderRadius: BorderRadius.circular(20)),
-                  child: const Text('الأكثر شيوعًا', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                ),
-              if (isRecommended) const SizedBox(height: 10),
-              Text(title, style: TextStyle(color: borderColor, fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              if (!isFree) Text(_isYearly ? yearlyPrice! : monthlyPrice!, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-              if (isFree) Text(price!, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-              Text(_isYearly && !isFree ? '/ سنة' : (isFree ? period! : '/ شهر'), style: const TextStyle(color: Colors.white70)),
-              const Divider(color: Colors.white24, height: 30),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: features.map((feature) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.check_circle, color: borderColor, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(child: Text(feature, style: const TextStyle(color: Colors.white, fontSize: 16))),
-                    ],
-                  ),
-                )).toList(),
-              ),
-              if (!isFree)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10.0),
-                  child: Builder(
-                    builder: (buttonContext) {
-                      return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: borderColor,
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: buttonContext,
-                            backgroundColor: Colors.transparent,
-                            isScrollControlled: true,
-                            builder: (sheetContext) {
-                              return const PaymentMethodsSheet();
-                            },
-                          );
-                        },
-                        child: const Text('اختر الخطة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
-                      );
-                    }
-                  ),
-                ),
+              const SizedBox(height: 20),
+              _buildHeader(),
+              const SizedBox(height: 40),
+              _buildBillingToggle(),
+              const SizedBox(height: 30),
+              _buildPlanCards(),
+              const SizedBox(height: 40),
+              _buildFooter(),
+              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
     );
   }
-}
 
+  Widget _buildHeader() {
+    return AnimatedBuilder(
+      animation: _headerController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, 50 * (1 - _headerController.value)),
+          child: Opacity(
+            opacity: _headerController.value.clamp(0.0, 1.0),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.glowColor.withOpacity(0.3),
+                        AppColors.glowColor.withOpacity(0.1),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.glowColor.withOpacity(0.3),
+                        blurRadius: 30,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.workspace_premium,
+                    size: 50,
+                    color: Colors.white,
+                  ),
+                )
+                    .animate()
+                    .scale(delay: 200.ms, duration: 600.ms)
+                    .shimmer(delay: 800.ms, duration: 1000.ms),
+                const SizedBox(height: 20),
+                Text(
+                  'اختر خطتك المثالية',
+                  style: GoogleFonts.cairo(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                )
+                    .animate()
+                    .fadeIn(delay: 400.ms, duration: 600.ms)
+                    .slideY(begin: 0.3, end: 0),
+                const SizedBox(height: 10),
+                Text(
+                  'احصل على وصول غير محدود لكل الميزات المتقدمة\nوابدأ رحلتك نحو النجاح',
+                  style: GoogleFonts.cairo(
+                    color: Colors.white70,
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                )
+                    .animate()
+                    .fadeIn(delay: 600.ms, duration: 600.ms)
+                    .slideY(begin: 0.3, end: 0),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBillingToggle() {
+    return BillingToggleWidget(
+      isYearly: _isYearly,
+      onToggle: (value) {
+        setState(() {
+          _isYearly = value;
+        });
+      },
+    );
+  }
+
+  Widget _buildPlanCards() {
+    final plans = SubscriptionPlan.getPlans();
+    
+    return Column(
+      children: plans.asMap().entries.map((entry) {
+        final index = entry.key;
+        final plan = entry.value;
+        
+        return AnimatedBuilder(
+          animation: _cardAnimations[index],
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(0, 100 * (1 - _cardAnimations[index].value)),
+              child: Opacity(
+                opacity: _cardAnimations[index].value.clamp(0.0, 1.0),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  child: PremiumPlanCard(
+                    plan: plan,
+                    isYearly: _isYearly,
+                    onSelectPlan: () => _handlePlanSelection(plan),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildFooter() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.security,
+                color: AppColors.glowColor,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'دفع آمن ومشفر 100%',
+                style: GoogleFonts.cairo(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'يمكنك إلغاء الاشتراك في أي وقت',
+            style: GoogleFonts.cairo(
+              color: Colors.white60,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    )
+        .animate()
+        .fadeIn(delay: 1500.ms, duration: 600.ms)
+        .slideY(begin: 0.3, end: 0);
+  }
+
+  void _handlePlanSelection(SubscriptionPlan plan) {
+    if (plan.isFree) {
+      _showFreePlanDialog();
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => PaymentMethodsSheet(
+        selectedPlan: plan,
+        isYearly: _isYearly,
+      ),
+    );
+  }
+
+  void _showFreePlanDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1F2937),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'الخطة المجانية',
+          style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'أنت تستخدم الخطة المجانية حالياً. ترقى للحصول على مميزات أكثر!',
+          style: GoogleFonts.cairo(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'حسناً',
+              style: GoogleFonts.cairo(color: AppColors.glowColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
