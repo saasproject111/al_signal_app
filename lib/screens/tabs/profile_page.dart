@@ -2,8 +2,7 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:my_app/screens/subscription_page.dart';
-import 'package:my_app/services/auth_service.dart';
+import 'package:my_app/widgets/animated_background.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -14,181 +13,212 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  Future<DocumentSnapshot> _getUserData() {
+  DocumentReference? get userRef {
     final user = FirebaseAuth.instance.currentUser;
-    return FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+    if (user == null) return null;
+    return FirebaseFirestore.instance.collection('users').doc(user.uid);
   }
 
-  Future<void> _launchSupportChat() async {
-    final Uri url = Uri.parse('https://t.me/m/FIrEmovvOTU0'); // !! استبدل بالرابط الصحيح !!
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('لا يمكن فتح الرابط')),
-        );
-      }
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    if (mounted) {
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
+  }
+
+  Future<void> _contactSupport() async {
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: 'support@yourapp.com',
+      query: 'subject=مساعدة بخصوص الحساب&body=السلام عليكم،',
+    );
+    if (await canLaunchUrl(emailLaunchUri)) {
+      await launchUrl(emailLaunchUri);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
-    final AuthService authService = AuthService();
 
-    // --- 1. تم تعديل هيكل الواجهة هنا لإصلاح الشريط الأبيض ---
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [Color(0xFF0A4F46), Colors.black], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-      ),
+    return AnimatedBackground(
       child: Scaffold(
-        backgroundColor: Colors.transparent, // جعل Scaffold شفافًا
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: const Text('الملف الشخصي', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          title: const Text(
+            'الملف الشخصي',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        body: SafeArea(
-          child: FutureBuilder<DocumentSnapshot>(
-            future: _getUserData(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (!snapshot.hasData || !snapshot.data!.exists) {
-                return const Center(child: Text('لا يمكن تحميل بيانات المستخدم', style: TextStyle(color: Colors.white)));
-              }
-              
-              final userData = snapshot.data!.data() as Map<String, dynamic>;
-              final bool isVip = userData['isVip'] ?? false;
-
-              return SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 30),
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-                      child: user?.photoURL == null ? const Icon(Icons.person, size: 50) : null,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      userData['displayName'] ?? 'لا يوجد اسم',
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    const SizedBox(height: 24),
-
-                    _buildGlassCard(
-                      child: Column(
-                        children: [
-                          if (isVip) _buildVipBanner(),
-                          _buildInfoRow(icon: Icons.email_outlined, label: 'البريد الإلكتروني', value: userData['email'] ?? 'N/A'),
-                          _buildInfoRow(icon: Icons.flag_outlined, label: 'الدولة', value: userData['country'] ?? 'غير محددة'),
-                          _buildInfoRow(icon: Icons.computer_outlined, label: 'المنصة', value: userData['platform'] ?? 'غير محددة'),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-
-                     _buildGlassCard(
-                      child: Column(
-                        children: [
-                           _buildActionButton(
-                            icon: Icons.star_purple500_outlined,
-                            text: 'إدارة الاشتراك',
-                            onTap: () {
-                               Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SubscriptionPage()));
-                            }
-                          ),
-                          const Divider(color: Colors.white12),
-                          _buildActionButton(
-                            icon: Icons.support_agent,
-                            text: 'التواصل مع الدعم',
-                            onTap: _launchSupportChat
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-
-                    ElevatedButton(
-                      onPressed: () => authService.signOut(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent.withOpacity(0.8),
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('تسجيل الخروج', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                     const SizedBox(height: 20),
-                  ],
-                ),
+        body: StreamBuilder<DocumentSnapshot>(
+          stream: userRef?.snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (!snapshot.hasData || !snapshot.data!.exists) {
+              return const Center(
+                child: Text('لا يمكن تحميل البيانات',
+                    style: TextStyle(color: Colors.white)),
               );
-            },
-          ),
+            }
+
+            final userData =
+                snapshot.data!.data() as Map<String, dynamic>? ?? {};
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+              child: Column(
+                children: [
+                  // صورة الحساب
+                  CircleAvatar(
+                    radius: 65,
+                    backgroundImage: user?.photoURL != null
+                        ? NetworkImage(user!.photoURL!)
+                        : null,
+                    child: user?.photoURL == null
+                        ? const Icon(Icons.person,
+                            size: 70, color: Colors.white70)
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // الاسم
+                  Center(
+                    child: Text(
+                      userData['displayName'] ??
+                          user?.displayName ??
+                          'مستخدم',
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+
+                  // الكارت بالمعلومات
+                  _buildGlassCard(
+                    children: [
+                      _buildInfoRow(
+                        icon: Icons.email_outlined,
+                        label: 'البريد الإلكتروني',
+                        value: userData['email'] ?? user?.email ?? 'N/A',
+                      ),
+                      const Divider(color: Colors.white24),
+                      _buildInfoRow(
+                        icon: Icons.flag_outlined,
+                        label: 'الدولة',
+                        value: userData['country'] ?? 'غير محددة',
+                      ),
+                      const Divider(color: Colors.white24),
+                      _buildInfoRow(
+                        icon: Icons.computer_outlined,
+                        label: 'المنصة',
+                        value: userData['platform'] ?? 'غير محددة',
+                      ),
+                      const Divider(color: Colors.white24),
+                      _buildInfoRow(
+                        icon: Icons.perm_identity,
+                        label: 'User ID',
+                        value: user?.uid.substring(0, 10) ?? 'N/A',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+
+                  // زر تسجيل الخروج
+                  _buildActionButton(
+                    label: 'تسجيل الخروج',
+                    color: Colors.redAccent,
+                    icon: Icons.logout,
+                    onPressed: _logout,
+                  ),
+                  const SizedBox(height: 15),
+
+                  // زر التواصل مع الدعم
+                  _buildActionButton(
+                    label: 'التواصل مع الدعم',
+                    color: Colors.blueAccent,
+                    icon: Icons.support_agent,
+                    onPressed: _contactSupport,
+                  ),
+                  const SizedBox(height: 50),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
-  
-  Widget _buildGlassCard({required Widget child}) {
+
+  Widget _buildGlassCard({required List<Widget> children}) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20.0),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+        filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
         child: Container(
+          width: double.infinity,
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.12),
+                Colors.white.withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(20.0),
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+            border: Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
           ),
-          child: child,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(children: children),
         ),
       ),
     );
   }
 
-  Widget _buildVipBanner() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16, top: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.yellow[700]?.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.yellow[700]!),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.star, color: Colors.yellow[700], size: 20),
-          const SizedBox(width: 8),
-          Text(
-            'عضوية VIP نشطة',
-            style: TextStyle(color: Colors.yellow[700], fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // --- 2. تم تعديل هذه الويدجت لإصلاح مشكلة تداخل النصوص ---
-  Widget _buildInfoRow({required IconData icon, required String label, required String value}) {
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: Colors.white70, size: 20),
-          const SizedBox(width: 16),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-          const SizedBox(width: 8), // مسافة صغيرة
-          // استخدام Flexible للسماح للنص الطويل بالالتفاف
-          Flexible(
+          Icon(icon, color: Colors.white70, size: 22),
+          const SizedBox(width: 14),
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 17,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 3,
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+              ),
               overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],
@@ -196,12 +226,29 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildActionButton({required IconData icon, required String text, required VoidCallback onTap}) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.white),
-      title: Text(text, style: const TextStyle(color: Colors.white, fontSize: 16)),
-      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
-      onTap: onTap,
+  Widget _buildActionButton({
+    required String label,
+    required Color color,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: 55,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color.withOpacity(0.9),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        ),
+        icon: Icon(icon, color: Colors.white),
+        label: Text(
+          label,
+          style: const TextStyle(
+              color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        onPressed: onPressed,
+      ),
     );
   }
 }
