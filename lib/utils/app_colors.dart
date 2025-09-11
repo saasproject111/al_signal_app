@@ -26,4 +26,5 @@ class AppColors {
   static const Color glowColor = Color(0xFF10B981);
   static const Color shimmerBase = Color(0xFF374151);
   static const Color shimmerHighlight = Color(0xFF4B5563);
+
 }

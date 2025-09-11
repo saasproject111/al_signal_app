@@ -1,13 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/subscription_plan.dart';
+import '../models/subscription_plan.dart'; // استيراد SubscriptionPlan من النماذج فقط
 import '../utils/app_colors.dart';
-
+import '../screens/premium_usdt_checkout_page.dart';
 // دالة تحمي الـ opacity
 Color safeOpacity(Color color, double opacity) {
   if (opacity < 0.0) opacity = 0.0;
   if (opacity > 1.0) opacity = 1.0;
   return color.withOpacity(opacity);
+}
+
+// ===== تعريف PaymentMethod خارج أي كلاس =====
+class PaymentMethod {
+  final String id;
+  final String name;
+  final String description;
+  final IconData icon;
+  final bool isEnabled;
+  final Color color;
+
+  PaymentMethod({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.icon,
+    required this.isEnabled,
+    required this.color,
+  });
 }
 
 class PaymentMethodsSheet extends StatefulWidget {
@@ -46,7 +65,7 @@ class _PaymentMethodsSheetState extends State<PaymentMethodsSheet>
     PaymentMethod(
       id: 'usdt',
       name: 'USDT (Tether)',
-      description: 'العملة المشفرة المستقرة',
+      description: '% دفع عن طريق العملات الرقميه امن 100',
       icon: Icons.currency_bitcoin,
       isEnabled: true,
       color: const Color(0xFF26A17B),
@@ -54,9 +73,9 @@ class _PaymentMethodsSheetState extends State<PaymentMethodsSheet>
     PaymentMethod(
       id: 'paypal',
       name: 'PayPal',
-      description: 'الدفع الآمن عبر PayPal',
+      description: 'paybal دفع عن طريق',
       icon: Icons.account_balance_wallet,
-      isEnabled: true,
+      isEnabled: false,
       color: const Color(0xFF0070BA),
     ),
   ];
@@ -346,7 +365,8 @@ class _PaymentMethodsSheetState extends State<PaymentMethodsSheet>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: safeOpacity(method.color, method.isEnabled ? 0.2 : 0.1),
+                    color: safeOpacity(
+                        method.color, method.isEnabled ? 0.2 : 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -503,16 +523,23 @@ class _PaymentMethodsSheetState extends State<PaymentMethodsSheet>
   }
 
   void _handlePayment() async {
-    setState(() => _isProcessing = true);
-
-    // محاكاة عملية الدفع
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (mounted) {
-      setState(() => _isProcessing = false);
-      Navigator.pop(context);
-      _showSuccessDialog();
+    if (_selectedPaymentMethod == 'usdt') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => USDTCheckoutPage(
+            selectedPlan: widget.selectedPlan,
+            isYearly: widget.isYearly,
+          ),
+        ),
+      );
+      return;
     }
+
+    setState(() => _isProcessing = true);
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => _isProcessing = false);
+    _showSuccessDialog();
   }
 
   void _showSuccessDialog() {
@@ -584,22 +611,4 @@ class _PaymentMethodsSheetState extends State<PaymentMethodsSheet>
       ),
     );
   }
-}
-
-class PaymentMethod {
-  final String id;
-  final String name;
-  final String description;
-  final IconData icon;
-  final bool isEnabled;
-  final Color color;
-
-  PaymentMethod({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.icon,
-    required this.isEnabled,
-    required this.color,
-  });
 }

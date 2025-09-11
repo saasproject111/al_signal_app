@@ -52,8 +52,8 @@ class SubscriptionPlan {
       const SubscriptionPlan(
         id: 'platinum',
         title: 'بلاتينيوم',
-        monthlyPrice: '9.99\$',
-        yearlyPrice: '59.99\$',
+        monthlyPrice: '25.00\$',
+        yearlyPrice: '200.00\$',
         features: [
           'كل مميزات الخطة المجانية',
           'جميع التوصيات الفورية',
@@ -69,8 +69,8 @@ class SubscriptionPlan {
       const SubscriptionPlan(
         id: 'gold',
         title: 'ذهبية',
-        monthlyPrice: '19.99\$',
-        yearlyPrice: '119.99\$',
+        monthlyPrice: '40.00\$',
+        yearlyPrice: '300.00\$',
         features: [
           'كل مميزات البلاتينيوم',
           'جلسات تحليل أسبوعية',
@@ -82,7 +82,7 @@ class SubscriptionPlan {
         borderColor: Color(0xFFEAB308),
         backgroundColor: Color(0xFFB45309),
         isRecommended: true,
-        badge: 'الأكثر شيوعًا',
+        badge: 'الأكثر اشتراكا',
         icon: Icons.workspace_premium,
         savings: 50,
       ),
