@@ -66,7 +66,7 @@ class _MainTabsPageState extends State<MainTabsPage> {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
               child: Container(
-                color: Colors.black.withOpacity(0.3), // ✅ أغمق شوية لمنع الخط الأصفر
+                color: Colors.black.withOpacity(0.3), // ✅ أغمق شوية لمنع التحذير
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: GNav(
@@ -88,12 +88,36 @@ class _MainTabsPageState extends State<MainTabsPage> {
                       });
                     },
                     tabs: const [
-                      GButton(icon: Icons.dashboard_rounded, text: 'الرئيسية'),
-                      GButton(icon: Icons.menu_book_rounded, text: 'التعلّم'),
-                      GButton(icon: Icons.bar_chart_rounded, text: 'توصيات'),
-                      GButton(icon: Icons.settings_rounded, text: 'الإعدادات'),
-                      GButton(icon: Icons.account_circle_rounded, text: 'حسابي'),
-                      GButton(icon: Icons.reviews_rounded, text: 'آراء المشتركين'),
+                      GButton(
+                        icon: Icons.dashboard_rounded,
+                        text: 'الرئيسية',
+                        textStyle: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                      GButton(
+                        icon: Icons.menu_book_rounded,
+                        text: 'التعلّم',
+                        textStyle: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                      GButton(
+                        icon: Icons.bar_chart_rounded,
+                        text: 'توصيات',
+                        textStyle: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                      GButton(
+                        icon: Icons.settings_rounded,
+                        text: 'الإعدادات',
+                        textStyle: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                      GButton(
+                        icon: Icons.account_circle_rounded,
+                        text: 'حسابي',
+                        textStyle: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                      GButton(
+                        icon: Icons.reviews_rounded,
+                        text: 'آراء المشتركين',
+                        textStyle: TextStyle(color: Colors.white, fontSize: 11), // أصغر شوية
+                      ),
                     ],
                   ),
                 ),
