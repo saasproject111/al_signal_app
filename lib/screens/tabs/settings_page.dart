@@ -102,7 +102,7 @@ class _SettingsPageState extends State<SettingsPage> {
           icon: Icons.computer,
           label: 'المنصة',
           value: platform,
-          items: ['Quotex', 'Binance', 'Bybit', 'أخرى'],
+          items: ['Quotex', 'Binance', 'Bybit', 'IQ Option', 'MetaTrader 4', 'MetaTrader 5','Olymp Trade','mx','Pocket Option','Deriv','Binomo','Expert Option','RaceOption','Binarycent','Finmax','Binary.com','Spectre.ai','Nadex','HighLow','24option','eToro','Plus500','IQCent','CTrader','FXTM','FXPro','AvaTrade','XTB','Pepperstone','IC Markets','OANDA','ThinkMarkets','FP Markets','HotForex','Exness','RoboForex','OctaFX','HYCM','Alpari'],
           onChanged: (newValue) {
             if (newValue != null) {
               _updateUserSetting({'platform': newValue});

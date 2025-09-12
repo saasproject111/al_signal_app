@@ -7,6 +7,7 @@ import 'package:my_app/screens/tabs/enhanced_learning_page.dart';
 import 'package:my_app/screens/tabs/profile_page.dart';
 import 'package:my_app/screens/tabs/recommendations_page.dart';
 import 'package:my_app/screens/tabs/settings_page.dart';
+import 'package:my_app/screens/tabs/subscribers_feedback_page.dart';
 
 class MainTabsPage extends StatefulWidget {
   const MainTabsPage({super.key});
@@ -25,6 +26,7 @@ class _MainTabsPageState extends State<MainTabsPage> {
     RecommendationsPage(),
     SettingsPage(),
     ProfilePage(),
+    SubscribersFeedbackPage(),
   ];
 
   final List<Color> _tabColors = [
@@ -33,6 +35,7 @@ class _MainTabsPageState extends State<MainTabsPage> {
     Colors.amber,
     Colors.redAccent,
     Colors.white,
+    Colors.deepPurpleAccent,
   ];
 
   @override
@@ -58,20 +61,21 @@ class _MainTabsPageState extends State<MainTabsPage> {
         bottomNavigationBar: Padding(
           padding: const EdgeInsets.all(8.0), // علشان الشريط يطفو فوق الخلفية
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(30), // دائري بالكامل
+            borderRadius: BorderRadius.circular(30),
+            clipBehavior: Clip.hardEdge, // ✅ يمنع أي overflow حوالين الشريط
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
               child: Container(
-                color: Colors.black.withOpacity(0.25), // الخلفية الفعلية للشريط فقط
+                color: Colors.black.withOpacity(0.3), // ✅ أغمق شوية لمنع الخط الأصفر
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: GNav(
                     backgroundColor: Colors.transparent,
                     color: Colors.white70,
                     activeColor: _tabColors[_selectedIndex],
                     tabBackgroundColor: _tabColors[_selectedIndex].withOpacity(0.25),
-                    gap: 8,
-                    padding: const EdgeInsets.all(12),
+                    gap: 6,
+                    padding: const EdgeInsets.all(10),
                     selectedIndex: _selectedIndex,
                     onTabChange: (index) {
                       _pageController.animateToPage(
@@ -89,6 +93,7 @@ class _MainTabsPageState extends State<MainTabsPage> {
                       GButton(icon: Icons.bar_chart_rounded, text: 'توصيات'),
                       GButton(icon: Icons.settings_rounded, text: 'الإعدادات'),
                       GButton(icon: Icons.account_circle_rounded, text: 'حسابي'),
+                      GButton(icon: Icons.reviews_rounded, text: 'آراء المشتركين'),
                     ],
                   ),
                 ),
