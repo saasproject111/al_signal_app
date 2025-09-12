@@ -27,13 +27,16 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _contactSupport() async {
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: 'support@yourapp.com',
-      query: 'subject=مساعدة بخصوص الحساب&body=السلام عليكم،',
-    );
-    if (await canLaunchUrl(emailLaunchUri)) {
-      await launchUrl(emailLaunchUri);
+    const url = 'https://t.me/m/FIrEmovvOTU0';
+    final Uri telegramUri = Uri.parse(url);
+
+    if (await canLaunchUrl(telegramUri)) {
+      await launchUrl(
+        telegramUri,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      throw 'لا يمكن فتح الرابط $url';
     }
   }
 
@@ -174,7 +177,8 @@ class _ProfilePageState extends State<ProfilePage> {
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20.0),
-            border: Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
+            border:
+                Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           child: Column(children: children),
