@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -6,6 +9,13 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        FileInputStream(keystorePropertiesFile).use { load(it) }
+    }
 }
 
 android {
@@ -33,13 +43,55 @@ android {
         versionName = flutter.versionName
     }
 
-    buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+    // >>> Signing config: release (reads from key.properties if present)
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                val storeFilePath = keystoreProperties.getProperty("storeFile")
+                if (!storeFilePath.isNullOrBlank()) {
+                    storeFile = file(storeFilePath)
+                }
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
         }
     }
+
+    buildTypes {
+        getByName("release") {
+            // Use the release signing config if available, otherwise keep existing behavior
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+
+            // Enable code shrinking, obfuscation (R8) and resource shrinking
+            isMinifyEnabled = true
+            isShrinkResources = true
+
+            // Use default proguard rules + your custom rules file
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+
+            // Keep existing defaults (disable debug)
+            // If you want to enable resource shrinking/proguard only in release builds, leave these true.
+        }
+
+        // Optional: keep debug as-is
+        getByName("debug") {
+            // debug config left unchanged
+        }
+    }
+
+    // Optional: reduce APK size by enabling ABI splits (uncomment if desired)
+    // splits {
+    //     abi {
+    //         isEnable = true
+    //         reset()
+    //         include("armeabi-v7a", "arm64-v8a", "x86_64")
+    //         isUniversalApk = false
+    //     }
+    // }
 }
 
 flutter {
