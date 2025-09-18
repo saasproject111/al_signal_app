@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:my_app/widgets/animated_background.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -19,10 +20,22 @@ class _ProfilePageState extends State<ProfilePage> {
     return FirebaseFirestore.instance.collection('users').doc(user.uid);
   }
 
+  /// ✅ تسجيل خروج من Firebase + Google
   Future<void> _logout() async {
-    await FirebaseAuth.instance.signOut();
-    if (mounted) {
-      Navigator.of(context).pushReplacementNamed('/login');
+    try {
+      // تسجيل خروج من Firebase
+      await FirebaseAuth.instance.signOut();
+
+      // تسجيل خروج من Google
+      final googleSignIn = GoogleSignIn();
+      await googleSignIn.signOut();
+      await googleSignIn.disconnect();
+
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+    } catch (e) {
+      debugPrint("خطأ أثناء تسجيل الخروج: $e");
     }
   }
 
@@ -89,17 +102,38 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // الاسم
+                  // الاسم + حالة الاشتراك
                   Center(
-                    child: Text(
-                      userData['displayName'] ??
-                          user?.displayName ??
-                          'مستخدم',
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    child: Column(
+                      children: [
+                        Text(
+                          userData['displayName'] ??
+                              user?.displayName ??
+                              'مستخدم',
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (userData['isVip'] == true)
+                          Text(
+                            'مشترك بريميوم',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.amber.shade400,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.5),
+                                  offset: const Offset(1, 1),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 40),

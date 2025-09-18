@@ -28,9 +28,49 @@ class _SettingsPageState extends State<SettingsPage> {
     await userRef?.update(data);
   }
 
+  final List<String> platforms = [
+    'Quotex', 'Binance', 'Bybit', 'IQ Option', 'MetaTrader 4', 'MetaTrader 5',
+    'Olymp Trade','mx','Pocket Option','Deriv','Binomo','Expert Option',
+    'RaceOption','Binarycent','Finmax','Binary.com','Spectre.ai','Nadex',
+    'HighLow','24option','eToro','Plus500','IQCent','CTrader','FXTM','FXPro',
+    'AvaTrade','XTB','Pepperstone','IC Markets','OANDA','ThinkMarkets',
+    'FP Markets','HotForex','Exness','RoboForex','OctaFX','HYCM','Alpari'
+  ];
+
+  final Map<String, IconData> platformIcons = {
+    'Binance': Icons.currency_bitcoin,
+    'Bybit': Icons.show_chart,
+    'IQ Option': Icons.trending_up,
+    'MetaTrader 4': Icons.bar_chart,
+    'MetaTrader 5': Icons.bar_chart,
+    'Olymp Trade': Icons.candlestick_chart,
+    'Pocket Option': Icons.pie_chart,
+    'Deriv': Icons.timeline,
+    'Binomo': Icons.stacked_line_chart,
+    'Expert Option': Icons.query_stats,
+    'Quotex': Icons.area_chart,
+    'eToro': Icons.people_alt,
+    'Plus500': Icons.account_balance_wallet,
+    'CTrader': Icons.auto_graph,
+    'FXTM': Icons.attach_money,
+    'FXPro': Icons.money,
+    'AvaTrade': Icons.swap_horiz,
+    'XTB': Icons.business_center,
+    'Pepperstone': Icons.moving,
+    'IC Markets': Icons.account_balance,
+    'OANDA': Icons.analytics,
+    'ThinkMarkets': Icons.lightbulb,
+    'HotForex': Icons.local_fire_department,
+    'Exness': Icons.apartment,
+    'RoboForex': Icons.smart_toy,
+    'OctaFX': Icons.circle,
+    'HYCM': Icons.domain,
+    'Alpari': Icons.assessment,
+  };
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedBackground( // <<< الخلفية المتحركة
+    return AnimatedBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
@@ -98,17 +138,7 @@ class _SettingsPageState extends State<SettingsPage> {
       children: [
         _buildCountrySelector(country),
         const Divider(color: Colors.white12),
-        _buildDropdownItem(
-          icon: Icons.computer,
-          label: 'المنصة',
-          value: platform,
-          items: ['Quotex', 'Binance', 'Bybit', 'IQ Option', 'MetaTrader 4', 'MetaTrader 5','Olymp Trade','mx','Pocket Option','Deriv','Binomo','Expert Option','RaceOption','Binarycent','Finmax','Binary.com','Spectre.ai','Nadex','HighLow','24option','eToro','Plus500','IQCent','CTrader','FXTM','FXPro','AvaTrade','XTB','Pepperstone','IC Markets','OANDA','ThinkMarkets','FP Markets','HotForex','Exness','RoboForex','OctaFX','HYCM','Alpari'],
-          onChanged: (newValue) {
-            if (newValue != null) {
-              _updateUserSetting({'platform': newValue});
-            }
-          },
-        ),
+        _buildPlatformSelector(platform),
       ],
     );
   }
@@ -277,42 +307,95 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildDropdownItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      child: Row(
+  Widget _buildPlatformSelector(String selectedPlatform) {
+    return ListTile(
+      leading: const Icon(Icons.computer, color: Colors.white70),
+      title: const Text('المنصة',
+          style: TextStyle(fontSize: 16, color: Colors.white)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white70),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(label,
-                style: const TextStyle(fontSize: 16, color: Colors.white)),
+          Text(
+            selectedPlatform,
+            style: const TextStyle(fontSize: 16, color: Colors.white),
           ),
-          Theme(
-            data: Theme.of(context).copyWith(canvasColor: Colors.blueGrey[800]),
-            child: DropdownButton<String>(
-              value: value,
-              iconEnabledColor: Colors.white70,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-              underline: const SizedBox(),
-              items: items
-                  .map<DropdownMenuItem<String>>(
-                      (String val) => DropdownMenuItem<String>(
-                            value: val,
-                            child: Text(val),
-                          ))
-                  .toList(),
-              onChanged: onChanged,
-            ),
-          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.arrow_drop_down, color: Colors.white70),
         ],
       ),
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          backgroundColor: Colors.blueGrey[900],
+          builder: (context) {
+            TextEditingController searchController = TextEditingController();
+            List<String> filteredPlatforms = List.from(platforms);
+
+            return StatefulBuilder(
+              builder: (context, setModalState) {
+                return Container(
+                  height: MediaQuery.of(context).size.height * 0.5, // نص الشاشة
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: searchController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'ابحث عن منصتك',
+                          hintStyle: const TextStyle(color: Colors.white70),
+                          prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                          filled: true,
+                          fillColor: Colors.blueGrey[800],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setModalState(() {
+                            filteredPlatforms = platforms
+                                .where((p) =>
+                                    p.toLowerCase().contains(value.toLowerCase()))
+                                .toList();
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: filteredPlatforms.length,
+                          itemBuilder: (context, index) {
+                            String platform = filteredPlatforms[index];
+                            return ListTile(
+                              leading: Icon(
+                                platformIcons[platform] ?? Icons.apps,
+                                color: Colors.white70,
+                              ),
+                              title: Text(
+                                platform,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              onTap: () {
+                                _updateUserSetting({'platform': platform});
+                                Navigator.pop(context);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 

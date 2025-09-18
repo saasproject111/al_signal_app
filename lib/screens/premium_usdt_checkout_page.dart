@@ -727,7 +727,7 @@ class _USDTCheckoutPageState extends State<USDTCheckoutPage>
           ),
           const SizedBox(width: 12),
           const Text(
-            "✅ قمت بأرسال المبلغ,",
+            "✅ قمت بأرسال المبلغ",
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
